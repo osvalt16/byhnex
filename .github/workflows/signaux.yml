@@ -1,7 +1,7 @@
 name: Signaux mobile
 on:
   schedule:
-    - cron: '4,19,34,49 * * * *'
+    - cron: '2-59/5 * * * *'
   workflow_dispatch:
 permissions:
   contents: write
