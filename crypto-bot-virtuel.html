@@ -6,67 +6,145 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Bot Crypto Virtuel — Temps réel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0d1117; --card: #161b22; --border: #30363d;
-    --text: #e6edf3; --muted: #8b949e;
-    --green: #3fb950; --red: #f85149; --accent: #58a6ff; --gold: #d29922;
+    --bg: #04060d; --card: rgba(12,18,36,0.66); --border: rgba(96,140,255,0.14);
+    --border-strong: rgba(62,198,255,0.4);
+    --text: #e9eefb; --muted: #8391ad;
+    --green: #2be3a4; --red: #ff5f76; --accent: #3ec6ff; --violet: #9a6bff; --gold: #e6b95c;
+    --glow-cyan: rgba(62,198,255,0.3); --glow-violet: rgba(154,107,255,0.25);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, "Segoe UI", Roboto, sans-serif; padding: 20px; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    padding: 26px 20px 60px; position: relative;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(640px 420px at 15% -5%, var(--glow-cyan), transparent 65%),
+      radial-gradient(700px 480px at 90% 105%, var(--glow-violet), transparent 65%);
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(99,140,255,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,140,255,0.045) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 75%);
+  }
   .container { max-width: 1100px; margin: 0 auto; }
-  header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; }
-  h1 { font-size: 22px; }
-  .status { color: var(--muted); font-size: 13px; }
-  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--red); margin-right: 6px; }
-  .dot.live { background: var(--green); animation: pulse 1.5s infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .strategy-bar { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
-  .card .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-  .card .value { font-size: 22px; font-weight: 700; }
-  .card .sub { font-size: 12px; margin-top: 3px; color: var(--muted); }
-  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
-  th { text-align: right; padding: 11px 10px; font-size: 11px; color: var(--muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
-  th:first-child { text-align: left; }
-  td { padding: 11px 10px; text-align: right; font-size: 14px; border-bottom: 1px solid var(--border); }
-  td:first-child { text-align: left; }
+  header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand img { width: 46px; height: 46px; border-radius: 12px; filter: drop-shadow(0 0 14px var(--glow-cyan)); }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;
+    background: linear-gradient(94deg, #f2f8ff 5%, var(--accent) 55%, var(--violet));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .status { color: var(--muted); font-size: 12.5px; letter-spacing: 0.3px; display: flex; align-items: center; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--red); margin-right: 7px; box-shadow: 0 0 10px var(--red); }
+  .dot.live { background: var(--green); box-shadow: 0 0 12px var(--green); animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .strategy-bar {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 12px 18px; margin-bottom: 14px; font-size: 13px; color: var(--muted);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: center;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    position: relative; overflow: hidden;
+  }
+  .strategy-bar::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(62,198,255,0.5), transparent);
+  }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 18px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    position: relative; overflow: hidden; transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(62,198,255,0.5), transparent);
+  }
+  .card:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: 0 14px 40px -20px var(--glow-cyan); }
+  .card .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1.6px; margin-bottom: 7px; font-weight: 600; }
+  .card .value { font-family: 'Space Grotesk', sans-serif; font-size: 23px; font-weight: 700; letter-spacing: 0.3px; }
+  .card .sub { font-size: 11.5px; margin-top: 4px; color: var(--muted); }
+  .table-wrap {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    overflow-x: auto; margin-bottom: 20px;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 760px; }
+  th { text-align: right; padding: 13px 12px; font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1.4px; border-bottom: 1px solid var(--border); }
+  th:first-child { text-align: left; padding-left: 18px; }
+  td { padding: 13px 12px; text-align: right; font-size: 14px; border-bottom: 1px solid rgba(96,140,255,0.08); }
+  td:first-child { text-align: left; padding-left: 18px; }
   tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background 0.2s; }
+  tbody tr:hover { background: rgba(62,198,255,0.04); }
   .up { color: var(--green); } .down { color: var(--red); }
   .flash-up { animation: fup 0.6s; } .flash-down { animation: fdn 0.6s; }
-  @keyframes fup { 0% { background: rgba(63,185,80,0.25); } 100% { background: transparent; } }
-  @keyframes fdn { 0% { background: rgba(248,81,73,0.25); } 100% { background: transparent; } }
-  .sig { padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-  .sig.buy { background: rgba(63,185,80,0.15); color: var(--green); }
-  .sig.sell { background: rgba(248,81,73,0.15); color: var(--red); }
-  .sig.neutral { background: rgba(139,148,158,0.15); color: var(--muted); }
-  h2 { font-size: 15px; margin-bottom: 8px; color: var(--muted); font-weight: 600; }
-  .log { background: var(--card); border: 1px solid var(--border); border-radius: 10px; max-height: 300px; overflow-y: auto; margin-bottom: 16px; }
-  .log-entry { padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  @keyframes fup { 0% { background: rgba(43,227,164,0.22); } 100% { background: transparent; } }
+  @keyframes fdn { 0% { background: rgba(255,95,118,0.22); } 100% { background: transparent; } }
+  .sig { padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.3px; white-space: nowrap; }
+  .sig.buy { background: rgba(43,227,164,0.1); color: var(--green); border: 1px solid rgba(43,227,164,0.35); box-shadow: 0 0 14px -6px var(--green); }
+  .sig.sell { background: rgba(255,95,118,0.1); color: var(--red); border: 1px solid rgba(255,95,118,0.35); box-shadow: 0 0 14px -6px var(--red); }
+  .sig.neutral { background: rgba(131,145,173,0.08); color: var(--muted); border: 1px solid rgba(131,145,173,0.25); }
+  h2 { font-family: 'Space Grotesk', sans-serif; font-size: 13px; margin-bottom: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1.6px; }
+  .log {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    max-height: 300px; overflow-y: auto; margin-bottom: 18px;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  }
+  .log::-webkit-scrollbar { width: 8px; }
+  .log::-webkit-scrollbar-track { background: transparent; }
+  .log::-webkit-scrollbar-thumb { background: rgba(96,140,255,0.25); border-radius: 4px; }
+  .log-entry { padding: 10px 16px; border-bottom: 1px solid rgba(96,140,255,0.08); font-size: 12.5px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .log-entry:last-child { border-bottom: none; }
-  .log-empty { padding: 20px; text-align: center; color: var(--muted); font-size: 13px; }
+  .log-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
   .badge-replay { color: var(--gold); font-size: 11px; }
   @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
-  .rsi-buy { color: var(--green); font-weight: 700; animation: blink 1s infinite; }
-  .rsi-sell { color: var(--red); font-weight: 700; animation: blink 1s infinite; }
-  button { background: var(--card); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
-  button:hover { border-color: var(--red); color: var(--red); }
-  .note { color: var(--muted); font-size: 12px; line-height: 1.6; }
-  .warn { background: rgba(210,153,34,0.08); border: 1px solid rgba(210,153,34,0.4); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: var(--gold); margin-bottom: 16px; line-height: 1.5; }
+  .rsi-buy { color: var(--green); font-weight: 700; animation: blink 1s infinite; text-shadow: 0 0 12px rgba(43,227,164,0.6); }
+  .rsi-sell { color: var(--red); font-weight: 700; animation: blink 1s infinite; text-shadow: 0 0 12px rgba(255,95,118,0.6); }
+  button {
+    background: rgba(62,198,255,0.05); border: 1px solid rgba(96,140,255,0.3); color: var(--muted);
+    border-radius: 999px; padding: 9px 18px; font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600;
+    letter-spacing: 0.3px; cursor: pointer; transition: border-color 0.2s, color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  button:hover { border-color: var(--red); color: var(--red); box-shadow: 0 0 18px -6px var(--red); }
+  #alerts { border-color: rgba(62,198,255,0.4); color: var(--accent); }
+  #alerts:hover { border-color: var(--accent); color: var(--accent); background: rgba(62,198,255,0.12); box-shadow: 0 0 18px -6px var(--accent); }
+  .note { color: var(--muted); font-size: 12px; line-height: 1.7; }
+  .warn {
+    background: rgba(230,185,92,0.06); border: 1px solid rgba(230,185,92,0.3); border-radius: 14px;
+    padding: 13px 18px; font-size: 12.5px; color: var(--gold); margin-bottom: 18px; line-height: 1.6;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  }
+  @media (max-width: 700px) { body { padding: 16px 12px 40px; } h1 { font-size: 19px; } .brand img { width: 38px; height: 38px; } }
 </style>
 </head>
 <body>
 <div class="container">
   <header>
-    <h1>🤖 Bot Crypto Virtuel</h1>
+    <div class="brand">
+      <img src="favicon.png" alt="">
+      <h1>Bot Crypto Virtuel</h1>
+    </div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Connexion…</span></div>
   </header>
 
   <div class="strategy-bar">
     <span>📐 <strong style="color:var(--text)">RSI 14 / bougies 15 min</strong> — Achat si RSI &lt; 30 (10 % du cash) · Vente si RSI &gt; 70 · <strong style="color:var(--gold)">Frais 0,60 %/ordre (Coinbase Advanced)</strong></span>
     <span id="catchup"></span>
-    <button id="alerts" style="border-color:var(--accent);color:var(--accent)">🔔 Alertes : OFF</button>
+    <button id="alerts">🔔 Alertes : OFF</button>
   </div>
 
   <div class="strategy-bar" id="market-bar">🧭 Analyse marché Bitcoin : chargement…</div>
@@ -97,12 +175,14 @@
     </div>
   </div>
 
+  <div class="table-wrap">
   <table>
     <thead>
       <tr><th>Crypto</th><th>Prix (temps réel)</th><th>24h</th><th>RSI</th><th>Tendance</th><th>Signal</th><th>Position du bot</th></tr>
     </thead>
     <tbody id="tbody"></tbody>
   </table>
+  </div>
 
   <h2>📜 Journal des trades du bot</h2>
   <div class="log" id="log"><div class="log-empty">Aucun trade pour l'instant. Le bot attend un signal RSI…</div></div>

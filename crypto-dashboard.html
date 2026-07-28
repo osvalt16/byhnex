@@ -6,51 +6,112 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Mon Dashboard Crypto — En direct</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0d1117; --card: #161b22; --border: #30363d;
-    --text: #e6edf3; --muted: #8b949e;
-    --green: #3fb950; --red: #f85149; --accent: #58a6ff;
+    --bg: #04060d; --card: rgba(12,18,36,0.66); --border: rgba(96,140,255,0.14);
+    --border-strong: rgba(62,198,255,0.4);
+    --text: #e9eefb; --muted: #8391ad;
+    --green: #2be3a4; --red: #ff5f76; --accent: #3ec6ff; --violet: #9a6bff; --gold: #e6b95c;
+    --glow-cyan: rgba(62,198,255,0.3); --glow-violet: rgba(154,107,255,0.25);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, "Segoe UI", Roboto, sans-serif; padding: 20px; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    padding: 26px 20px 60px; position: relative;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(640px 420px at 15% -5%, var(--glow-cyan), transparent 65%),
+      radial-gradient(700px 480px at 90% 105%, var(--glow-violet), transparent 65%);
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(99,140,255,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,140,255,0.045) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 75%);
+  }
   .container { max-width: 1100px; margin: 0 auto; }
-  header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-  h1 { font-size: 22px; }
-  .status { color: var(--muted); font-size: 13px; }
-  .status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-right: 6px; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-  .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .card .value { font-size: 24px; font-weight: 700; }
-  .card .sub { font-size: 13px; margin-top: 4px; }
-  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-  thead th { text-align: right; padding: 12px 10px; font-size: 12px; color: var(--muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand img { width: 46px; height: 46px; border-radius: 12px; filter: drop-shadow(0 0 14px var(--glow-cyan)); }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;
+    background: linear-gradient(94deg, #f2f8ff 5%, var(--accent) 55%, var(--violet));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .status { color: var(--muted); font-size: 12.5px; letter-spacing: 0.3px; display: flex; align-items: center; }
+  .status .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-right: 7px; box-shadow: 0 0 10px var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    position: relative; overflow: hidden; transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(62,198,255,0.5), transparent);
+  }
+  .card:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: 0 14px 40px -20px var(--glow-cyan); }
+  .card .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1.6px; margin-bottom: 7px; font-weight: 600; }
+  .card .value { font-family: 'Space Grotesk', sans-serif; font-size: 25px; font-weight: 700; letter-spacing: 0.3px; }
+  .card .sub { font-size: 12px; margin-top: 4px; }
+  .table-wrap {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    overflow-x: auto;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { text-align: right; padding: 13px 12px; font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1.4px; border-bottom: 1px solid var(--border); }
   thead th:nth-child(1), thead th:nth-child(2) { text-align: left; }
-  tbody td { padding: 12px 10px; text-align: right; font-size: 14px; border-bottom: 1px solid var(--border); }
+  thead th:first-child { padding-left: 18px; }
+  tbody td { padding: 12px; text-align: right; font-size: 14px; border-bottom: 1px solid rgba(96,140,255,0.08); }
   tbody td:nth-child(1), tbody td:nth-child(2) { text-align: left; }
+  tbody td:first-child { padding-left: 18px; }
   tbody tr:last-child td { border-bottom: none; }
-  tbody tr:hover { background: rgba(88,166,255,0.05); }
-  .coin { display: flex; align-items: center; gap: 8px; }
-  .coin img { width: 22px; height: 22px; border-radius: 50%; }
-  .coin .sym { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+  tbody tr { transition: background 0.2s; }
+  tbody tr:hover { background: rgba(62,198,255,0.04); }
+  .coin { display: flex; align-items: center; gap: 10px; }
+  .coin img { width: 24px; height: 24px; border-radius: 50%; filter: drop-shadow(0 0 6px rgba(62,198,255,0.25)); }
+  .coin .sym { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
   .up { color: var(--green); }
   .down { color: var(--red); }
-  input.qty { width: 90px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 6px 8px; font-size: 13px; text-align: right; }
-  input.qty:focus { outline: none; border-color: var(--accent); }
-  .error { background: rgba(248,81,73,0.1); border: 1px solid var(--red); color: var(--red); padding: 12px; border-radius: 8px; margin-bottom: 16px; display: none; }
-  .note { color: var(--muted); font-size: 12px; margin-top: 16px; line-height: 1.5; }
+  input.qty {
+    width: 92px; background: rgba(4,6,13,0.6); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); padding: 7px 9px; font-size: 13px; text-align: right;
+    font-family: 'Inter', sans-serif; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input.qty:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 14px -6px var(--accent); }
+  .error {
+    background: rgba(255,95,118,0.08); border: 1px solid rgba(255,95,118,0.4); color: var(--red);
+    padding: 13px 16px; border-radius: 12px; margin-bottom: 16px; display: none; font-size: 13px;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  }
+  .note { color: var(--muted); font-size: 12px; margin-top: 18px; line-height: 1.7; }
   @media (max-width: 700px) {
     .hide-mobile { display: none; }
-    body { padding: 10px; }
+    body { padding: 16px 12px 40px; }
+    h1 { font-size: 19px; }
+    .brand img { width: 38px; height: 38px; }
   }
 </style>
 </head>
 <body>
 <div class="container">
   <header>
-    <h1>🪙 Mon Dashboard Crypto</h1>
+    <div class="brand">
+      <img src="favicon.png" alt="">
+      <h1>Mon Dashboard Crypto</h1>
+    </div>
     <div class="status"><span class="dot"></span><span id="status">Chargement…</span></div>
   </header>
 
@@ -73,6 +134,7 @@
     </div>
   </div>
 
+  <div class="table-wrap">
   <table>
     <thead>
       <tr>
@@ -91,6 +153,7 @@
       <tr><td colspan="9" style="text-align:center; color: var(--muted); padding: 30px;">Chargement des données CoinGecko…</td></tr>
     </tbody>
   </table>
+  </div>
 
   <p class="note">
     📡 Données : API gratuite CoinGecko · Rafraîchissement automatique toutes les 60 secondes.<br>
