@@ -56,10 +56,10 @@ async function buildCoins(pairs, cbSet, top) {
 
 async function main() {
   const [info, top, prods, rates] = await Promise.all([
-    getJson('https://api.binance.com/api/v3/exchangeInfo'),
+    getJson('https://data-api.binance.vision/api/v3/exchangeInfo'),
     getJson('https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=30&page=1'),
     getJson('https://api.exchange.coinbase.com/products').catch(() => null),
-    getJson('https://api.binance.com/api/v3/ticker/price?symbols=' + encodeURIComponent('["EURUSDT","EURUSDC"]')),
+    getJson('https://data-api.binance.vision/api/v3/ticker/price?symbols=' + encodeURIComponent('["EURUSDT","EURUSDC"]')),
   ]);
   const pairs = new Set(info.symbols.filter(s => s.status === 'TRADING').map(s => s.symbol));
   const cbSet = prods ? new Set(prods.filter(x => (x.quote_currency === 'USD' || x.quote_currency === 'USDC') && x.status === 'online' && !x.trading_disabled).map(x => x.base_currency)) : null;
@@ -70,7 +70,7 @@ async function main() {
   const coins = await buildCoins(pairs, cbSet, top);
   if (coins.length < 5) throw new Error('liste de cryptos trop courte, abandon');
 
-  const t24 = await getJson('https://api.binance.com/api/v3/ticker/24hr?symbols=' + encodeURIComponent(JSON.stringify(coins.map(c => c.sym))));
+  const t24 = await getJson('https://data-api.binance.vision/api/v3/ticker/24hr?symbols=' + encodeURIComponent(JSON.stringify(coins.map(c => c.sym))));
   const t24Map = Object.fromEntries(t24.map(t => [t.symbol, t]));
 
   const now = Date.now();
@@ -78,7 +78,7 @@ async function main() {
   for (const coin of coins) {
     const k = conv(coin);
     if (k === null) continue;
-    const raw = await getJson(`https://api.binance.com/api/v3/klines?symbol=${coin.sym}&interval=${INTERVAL}&limit=250`);
+    const raw = await getJson(`https://data-api.binance.vision/api/v3/klines?symbol=${coin.sym}&interval=${INTERVAL}&limit=250`);
     const closes = raw.filter(x => x[6] <= now).map(x => parseFloat(x[4]) * k);
     const rsis = rsiSeries(closes, RSI_PERIOD);
     const rsi = rsis[rsis.length - 1];

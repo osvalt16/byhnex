@@ -1,11 +1,11 @@
 {
- "updatedAt": "2026-07-28T12:48:32.439Z",
+ "updatedAt": "2026-07-28T12:50:39.260Z",
  "coins": [
   {
    "short": "BTC",
    "name": "Bitcoin",
-   "price": 55845.3,
-   "pct24h": -2.342,
+   "price": 55823.07,
+   "pct24h": -2.321,
    "rsi": 50.7,
    "trend": "down",
    "zone": "neutral"
@@ -13,8 +13,8 @@
   {
    "short": "ETH",
    "name": "Ethereum",
-   "price": 1661.19,
-   "pct24h": -3.356,
+   "price": 1659.52,
+   "pct24h": -3.452,
    "rsi": 54.5,
    "trend": "down",
    "zone": "neutral"
@@ -31,8 +31,8 @@
   {
    "short": "XRP",
    "name": "XRP",
-   "price": 0.9264,
-   "pct24h": -4.564,
+   "price": 0.9257,
+   "pct24h": -4.626,
    "rsi": 41.7,
    "trend": "down",
    "zone": "neutral"
@@ -40,8 +40,8 @@
   {
    "short": "SOL",
    "name": "Solana",
-   "price": 64.54,
-   "pct24h": -4.569,
+   "price": 64.48,
+   "pct24h": -4.587,
    "rsi": 50.9,
    "trend": "down",
    "zone": "neutral"
@@ -50,7 +50,7 @@
    "short": "DOGE",
    "name": "Dogecoin",
    "price": 0.0617,
-   "pct24h": -3.594,
+   "pct24h": -3.639,
    "rsi": 48.3,
    "trend": "down",
    "zone": "neutral"
@@ -58,8 +58,8 @@
   {
    "short": "ZEC",
    "name": "Zcash",
-   "price": 409.3428345209818,
-   "pct24h": -7.591,
+   "price": 408.46235045742435,
+   "pct24h": -7.557,
    "rsi": 35.5,
    "trend": "down",
    "zone": "neutral"
@@ -67,8 +67,8 @@
   {
    "short": "LINK",
    "name": "Chainlink",
-   "price": 7.325,
-   "pct24h": -4.622,
+   "price": 7.324,
+   "pct24h": -4.635,
    "rsi": 50.1,
    "trend": "down",
    "zone": "neutral"
@@ -77,7 +77,7 @@
    "short": "ADA",
    "name": "Cardano",
    "price": 0.1393,
-   "pct24h": -3.331,
+   "pct24h": -3.197,
    "rsi": 64.9,
    "trend": "down",
    "zone": "neutral"
