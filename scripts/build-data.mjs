@@ -109,6 +109,23 @@ async function main() {
   const maj = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
   fs.writeFileSync('out/widget.txt', lines.join('\n') + `\nMàJ ${maj} · RSI<30 achat · >70 vente`);
 
+  // Version couleur pour KWGT (balises Kustom [c=#rrggbb]...[/c], theme du site)
+  const GREEN = '2be3a4', RED = 'ff5f76', MUTED = '8391ad', GOLD = 'e6b95c';
+  const col = (txt, c) => `[c=#${c}]${txt}[/c]`;
+  const clines = out.map(c => {
+    const up24 = c.pct24h >= 0;
+    const pctTxt = `${up24 ? '▲' : '▼'}${Math.abs(c.pct24h).toFixed(1).padStart(4)}%`;
+    const rsiTxt = `RSI ${String(c.rsi ?? '—').padStart(4)}`;
+    const rsiCol = c.rsi === null ? MUTED : c.rsi < BUY_BELOW ? GREEN : c.rsi > SELL_ABOVE ? RED : null;
+    const arrTxt = arrow(c.trend);
+    const arrCol = c.trend === 'up' ? GREEN : c.trend === 'down' ? RED : MUTED;
+    return `${zicon(c.zone)}[b]${c.short.padEnd(5)}[/b] ${fmtPx(c.price).padStart(9)}€ `
+      + col(pctTxt, up24 ? GREEN : RED) + ' '
+      + (rsiCol ? col(rsiTxt, rsiCol) : rsiTxt) + ' '
+      + col(arrTxt, arrCol);
+  });
+  fs.writeFileSync('out/widget-color.txt', clines.join('\n') + '\n' + col(`MàJ ${maj} · RSI<30 achat · >70 vente`, MUTED));
+
   // Notifications : uniquement les ENTREES en zone (comparaison avec l'etat precedent)
   let prev = null;
   try { prev = JSON.parse(fs.readFileSync('prev.json', 'utf8')); } catch {}
