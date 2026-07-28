@@ -4,19 +4,29 @@
 // La logique replique exactement celle de crypto-bot-virtuel.html.
 'use strict';
 
-import { createPrivateKey, createSign, randomBytes } from 'node:crypto';
+import { createPrivateKey, createSign, randomBytes, sign as rawSign } from 'node:crypto';
 
 // --- Positions reelles Coinbase (optionnel : actif si les secrets existent) ---
 // Cle API en LECTURE SEULE uniquement, stockee dans les secrets GitHub Actions.
 // Les positions ne sont JAMAIS publiees sur la branche data (repo public) :
 // elles n'apparaissent que dans les notifications privees ntfy.
-function cbJwt(keyName, pem, method, pathname) {
+function cbJwt(keyName, secret, method, pathname) {
   const now = Math.floor(Date.now() / 1000);
   const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
-  const input = b64({ alg: 'ES256', kid: keyName, typ: 'JWT', nonce: randomBytes(16).toString('hex') })
+  const isEd = !secret.includes('BEGIN'); // cle Ed25519 (base64) ou ECDSA (PEM)
+  const input = b64({ alg: isEd ? 'EdDSA' : 'ES256', kid: keyName, typ: 'JWT', nonce: randomBytes(16).toString('hex') })
     + '.' + b64({ sub: keyName, iss: 'cdp', nbf: now, exp: now + 120, uri: `${method} api.coinbase.com${pathname}` });
-  const sig = createSign('SHA256').update(input).end()
-    .sign({ key: createPrivateKey(pem), dsaEncoding: 'ieee-p1363' }).toString('base64url');
+  let sig;
+  if (isEd) {
+    // secret = 64 octets base64 (graine 32 + cle publique 32) -> PKCS8
+    const seed = Buffer.from(secret, 'base64').subarray(0, 32);
+    const der = Buffer.concat([Buffer.from('302e020100300506032b657004220420', 'hex'), seed]);
+    const key = createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
+    sig = rawSign(null, Buffer.from(input), key).toString('base64url');
+  } else {
+    sig = createSign('SHA256').update(input).end()
+      .sign({ key: createPrivateKey(secret), dsaEncoding: 'ieee-p1363' }).toString('base64url');
+  }
   return input + '.' + sig;
 }
 
