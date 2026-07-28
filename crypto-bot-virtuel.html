@@ -134,7 +134,7 @@ const FALLBACK = [
   { sym: 'BNBEUR', name: 'BNB', short: 'BNB' },
   { sym: 'XRPEUR', name: 'XRP', short: 'XRP' },
   { sym: 'SOLEUR', name: 'Solana', short: 'SOL' },
-  { sym: 'TRXEUR', name: 'TRON', short: 'TRX' },
+  { sym: 'LTCEUR', name: 'Litecoin', short: 'LTC' },
   { sym: 'DOGEEUR', name: 'Dogecoin', short: 'DOGE' },
   { sym: 'XLMEUR', name: 'Stellar', short: 'XLM' },
   { sym: 'ADAEUR', name: 'Cardano', short: 'ADA' },
@@ -216,6 +216,9 @@ async function buildCoins() {
       const quote = sym.endsWith('USDC') ? 'USDC' : sym.endsWith('USDT') ? 'USDT' : 'EUR';
       COINS.push({ sym, name: short + ' (hors top 10)', short, quote });
     }
+  }
+  for (const sym of Object.keys(state.lastCandle)) {
+    if (!COINS.some(c => c.sym === sym)) delete state.lastCandle[sym];
   }
 }
 
