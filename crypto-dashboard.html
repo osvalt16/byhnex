@@ -115,7 +115,7 @@ const fmtBig = n => {
   return fmtEur(n, 0);
 };
 const pct = n => {
-  if (n === null || n === undefined || isNaN(n)) return '<span class="muted">—</span>';
+  if (n === null || n === undefined || isNaN(n)) return '<span style="color:var(--muted)">—</span>';
   const cls = n >= 0 ? 'up' : 'down';
   const arrow = n >= 0 ? '▲' : '▼';
   return `<span class="${cls}">${arrow} ${Math.abs(n).toFixed(2)} %</span>`;
@@ -187,7 +187,12 @@ async function refresh() {
     const res = await fetch(API);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    render(data);
+    const active = document.activeElement;
+    if (active && active.classList && active.classList.contains('qty')) {
+      lastData = data; // saisie en cours : on garde les donnees, le tableau sera redessine au prochain changement
+    } else {
+      render(data);
+    }
     errEl.style.display = 'none';
     document.getElementById('status').textContent = 'En direct · mis à jour à ' + new Date().toLocaleTimeString('fr-FR');
   } catch (e) {
