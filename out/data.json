@@ -1,93 +1,93 @@
 {
- "updatedAt": "2026-07-28T13:55:38.234Z",
+ "updatedAt": "2026-07-28T14:35:18.478Z",
  "coins": [
   {
    "short": "BTC",
    "name": "Bitcoin",
-   "price": 55354.36,
-   "pct24h": -3.704,
-   "rsi": 28.5,
+   "price": 55462.83,
+   "pct24h": -2.385,
+   "rsi": 36.9,
    "trend": "down",
-   "zone": "buy"
+   "zone": "neutral"
   },
   {
    "short": "ETH",
    "name": "Ethereum",
-   "price": 1643.42,
-   "pct24h": -4.864,
-   "rsi": 35.9,
+   "price": 1649.55,
+   "pct24h": -2.727,
+   "rsi": 44.4,
    "trend": "down",
    "zone": "neutral"
   },
   {
    "short": "BNB",
    "name": "BNB",
-   "price": 496.75,
-   "pct24h": -1.595,
-   "rsi": 41.9,
+   "price": 497.29,
+   "pct24h": -0.299,
+   "rsi": 44.2,
    "trend": "down",
    "zone": "neutral"
   },
   {
    "short": "XRP",
    "name": "XRP",
-   "price": 0.9228,
-   "pct24h": -5.276,
-   "rsi": 33.8,
+   "price": 0.9235,
+   "pct24h": -3.862,
+   "rsi": 37.4,
    "trend": "down",
    "zone": "neutral"
   },
   {
    "short": "SOL",
    "name": "Solana",
-   "price": 63.8,
-   "pct24h": -5.705,
-   "rsi": 27.5,
+   "price": 63.95,
+   "pct24h": -3.661,
+   "rsi": 39,
    "trend": "down",
-   "zone": "buy"
+   "zone": "neutral"
   },
   {
    "short": "DOGE",
    "name": "Dogecoin",
-   "price": 0.06106,
-   "pct24h": -4.444,
-   "rsi": 31.1,
+   "price": 0.06134,
+   "pct24h": -2.169,
+   "rsi": 36.1,
    "trend": "down",
    "zone": "neutral"
   },
   {
    "short": "ZEC",
    "name": "Zcash",
-   "price": 404.27327881825374,
-   "pct24h": -8.88,
-   "rsi": 27.4,
+   "price": 406.4686236596942,
+   "pct24h": -5.851,
+   "rsi": 38.7,
    "trend": "down",
-   "zone": "buy"
+   "zone": "neutral"
   },
   {
    "short": "LINK",
    "name": "Chainlink",
-   "price": 7.225,
-   "pct24h": -6.218,
-   "rsi": 29.9,
-   "trend": "down",
-   "zone": "buy"
-  },
-  {
-   "short": "XLM",
-   "name": "Stellar",
-   "price": 0.1499,
-   "pct24h": -5.426,
-   "rsi": 32.3,
+   "price": 7.236,
+   "pct24h": -4.336,
+   "rsi": 35.6,
    "trend": "down",
    "zone": "neutral"
   },
   {
    "short": "ADA",
    "name": "Cardano",
-   "price": 0.1372,
-   "pct24h": -4.986,
-   "rsi": 37.5,
+   "price": 0.1375,
+   "pct24h": -2.274,
+   "rsi": 43.5,
+   "trend": "down",
+   "zone": "neutral"
+  },
+  {
+   "short": "XLM",
+   "name": "Stellar",
+   "price": 0.1496,
+   "pct24h": -4.653,
+   "rsi": 36.4,
    "trend": "down",
    "zone": "neutral"
   }

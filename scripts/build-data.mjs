@@ -119,9 +119,9 @@ async function main() {
     const rsiCol = c.rsi === null ? MUTED : c.rsi < BUY_BELOW ? GREEN : c.rsi > SELL_ABOVE ? RED : null;
     const arrTxt = arrow(c.trend);
     const arrCol = c.trend === 'up' ? GREEN : c.trend === 'down' ? RED : MUTED;
-    return `${zicon(c.zone)}[b]${c.short.padEnd(5)}[/b] ${fmtPx(c.price).padStart(9)}€ `
+    return `[b]${c.short.padEnd(5)}[/b] ${fmtPx(c.price).padStart(9)}€ `
       + col(pctTxt, up24 ? GREEN : RED) + ' '
-      + (rsiCol ? col(rsiTxt, rsiCol) : rsiTxt) + ' '
+      + (rsiCol ? `[b]${col(rsiTxt, rsiCol)}[/b]` : rsiTxt) + ' '
       + col(arrTxt, arrCol);
   });
   fs.writeFileSync('out/widget-color.txt', clines.join('\n') + '\n' + col(`MàJ ${maj} · RSI<30 achat · >70 vente`, MUTED));
@@ -129,7 +129,7 @@ async function main() {
   // Colonnes separees : alignement parfait avec n'importe quelle police
   // (4 elements Texte cote a cote dans KWGT, alignes par leurs reglages)
   const colRsi = c => c.rsi === null ? col('—', MUTED) : (c.rsi < BUY_BELOW ? col('' + c.rsi, GREEN) : c.rsi > SELL_ABOVE ? col('' + c.rsi, RED) : '' + c.rsi);
-  fs.writeFileSync('out/col-crypto.txt', out.map(c => `${zicon(c.zone)}[b]${c.short}[/b]`).join('\n'));
+  fs.writeFileSync('out/col-crypto.txt', out.map(c => `[b]${c.short}[/b]`).join('\n'));
   fs.writeFileSync('out/col-prix.txt', out.map(c => `${fmtPx(c.price)}€`).join('\n'));
   fs.writeFileSync('out/col-24h.txt', out.map(c => col(`${c.pct24h >= 0 ? '▲' : '▼'} ${Math.abs(c.pct24h).toFixed(1)}%`, c.pct24h >= 0 ? GREEN : RED)).join('\n'));
   fs.writeFileSync('out/col-rsi.txt', out.map(c => `${colRsi(c)} ${col(arrow(c.trend), c.trend === 'up' ? GREEN : c.trend === 'down' ? RED : MUTED)}`).join('\n'));
