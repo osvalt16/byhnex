@@ -581,7 +581,16 @@ async function refreshUniverse() {
   seedTickers();
   await processNewCandles(true);
   connectWS();
-  setInterval(() => { fetchRates(); processNewCandles(false); seedTickers(); }, 60000);
+  const CANDLE_MS = 15 * 60 * 1000;
+  let lastBoundary = Math.floor((Date.now() - 5000) / CANDLE_MS);
+  setInterval(() => {
+    fetchRates(); seedTickers();
+    // les bougies 15 min ne cloturent que toutes les 15 min : inutile de
+    // re-telecharger 250 bougies x 10 cryptos toutes les 60 s.
+    // Marge de 5 s pour laisser Binance publier la bougie cloturee.
+    const boundary = Math.floor((Date.now() - 5000) / CANDLE_MS);
+    if (boundary > lastBoundary) { lastBoundary = boundary; processNewCandles(false); }
+  }, 60000);
   setInterval(refreshUniverse, 15 * 60 * 1000);
   updateMarket();
   setInterval(updateMarket, 15 * 60 * 1000);
