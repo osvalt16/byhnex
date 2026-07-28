@@ -146,6 +146,7 @@ async function main() {
       if (pz !== undefined && pz !== c.zone && (c.zone === 'buy' || c.zone === 'sell')) {
         const isBuy = c.zone === 'buy';
         const warn = isBuy && c.trend === 'down' ? ' ⚠️ couteau qui tombe' : (!isBuy && c.trend === 'up' ? ' ⚠️ tendance forte' : '');
+        const tLabel = c.trend === 'up' ? '↗ haussière' : c.trend === 'down' ? '↘ baissière' : c.trend === 'flat' ? '→ neutre' : 'inconnue';
         // publication JSON : les en-tetes HTTP n'acceptent pas l'UTF-8 (accents, tirets)
         try {
           const r = await fetch('https://ntfy.sh', {
@@ -153,7 +154,7 @@ async function main() {
             body: JSON.stringify({
               topic,
               title: (isBuy ? "Zone d'achat — " : 'Zone de vente — ') + c.short,
-              message: `${c.name} — RSI ${c.rsi} · prix ${fmtPx(c.price)} €${warn}. Info, pas un conseil financier.`,
+              message: `${c.name} — RSI ${c.rsi} · prix ${fmtPx(c.price)} € · tendance ${tLabel}${warn}. Info, pas un conseil financier.`,
               priority: 4,
               tags: [isBuy ? 'green_circle' : 'red_circle'],
               click: 'https://osvalt16.github.io/michmich/crypto-bot-virtuel.html',
