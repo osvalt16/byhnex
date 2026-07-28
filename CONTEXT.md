@@ -53,6 +53,11 @@ avant toute discussion d'argent reel.
   Colonne tendance via moyennes 50/200 (bougies 15 min) + barre marche Bitcoin (50/200 jours).
   Les bougies ne sont retelechargees qu'apres chaque cloture 15 min.
   Stockage : `crypto-bot-v3` (+ `crypto-bot-alerts` pour l'etat des alertes).
+- `scripts/build-data.mjs` + `.github/workflows/signaux.yml` : toutes les 15 min,
+  GitHub Actions recalcule les signaux (meme logique que le bot) et publie
+  `data.json` + `widget.txt` sur la branche `data` (pour le widget KWGT du telephone),
+  et envoie une notification push ntfy a chaque entree en zone achat/vente
+  (canal secret dans le secret Actions `NTFY_TOPIC`).
 - `CONTEXT.md` : ce fichier.
 
 ## Regles APIs et donnees
