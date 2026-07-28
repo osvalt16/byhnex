@@ -18,9 +18,12 @@ function cbJwt(keyName, secret, method, pathname) {
     + '.' + b64({ sub: keyName, iss: 'cdp', nbf: now, exp: now + 120, uri: `${method} api.coinbase.com${pathname}` });
   let sig;
   if (isEd) {
-    // secret = 64 octets base64 (graine 32 + cle publique 32) -> PKCS8
-    const seed = Buffer.from(secret, 'base64').subarray(0, 32);
-    const der = Buffer.concat([Buffer.from('302e020100300506032b657004220420', 'hex'), seed]);
+    // secret = base64 de 64 octets (graine 32 + cle publique 32) ou 32 (graine seule) -> PKCS8
+    const cleaned = secret.trim().replace(/^["']|["']$/g, '').replace(/\s+/g, '');
+    const raw = Buffer.from(cleaned, 'base64');
+    console.log('cle coinbase decodee:', raw.length, 'octets (64 ou 32 attendus)');
+    if (raw.length < 32) throw new Error('cle privee trop courte apres decodage base64');
+    const der = Buffer.concat([Buffer.from('302e020100300506032b657004220420', 'hex'), raw.subarray(0, 32)]);
     const key = createPrivateKey({ key: der, format: 'der', type: 'pkcs8' });
     sig = rawSign(null, Buffer.from(input), key).toString('base64url');
   } else {
