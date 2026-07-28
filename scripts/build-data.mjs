@@ -146,17 +146,21 @@ async function main() {
       if (pz !== undefined && pz !== c.zone && (c.zone === 'buy' || c.zone === 'sell')) {
         const isBuy = c.zone === 'buy';
         const warn = isBuy && c.trend === 'down' ? ' ⚠️ couteau qui tombe' : (!isBuy && c.trend === 'up' ? ' ⚠️ tendance forte' : '');
-        await fetch('https://ntfy.sh/' + topic, {
-          method: 'POST',
-          headers: {
-            'Title': (isBuy ? 'Zone d\'achat — ' : 'Zone de vente — ') + c.short,
-            'Priority': 'high',
-            'Tags': isBuy ? 'green_circle' : 'red_circle',
-            'Click': 'https://osvalt16.github.io/michmich/crypto-bot-virtuel.html',
-          },
-          body: `${c.name} — RSI ${c.rsi} · prix ${fmtPx(c.price)} €${warn}. Info, pas un conseil financier.`,
-        }).catch(e => console.error('ntfy:', e.message));
-        console.log('notif envoyee:', c.short, c.zone);
+        // publication JSON : les en-tetes HTTP n'acceptent pas l'UTF-8 (accents, tirets)
+        try {
+          const r = await fetch('https://ntfy.sh', {
+            method: 'POST',
+            body: JSON.stringify({
+              topic,
+              title: (isBuy ? "Zone d'achat — " : 'Zone de vente — ') + c.short,
+              message: `${c.name} — RSI ${c.rsi} · prix ${fmtPx(c.price)} €${warn}. Info, pas un conseil financier.`,
+              priority: 4,
+              tags: [isBuy ? 'green_circle' : 'red_circle'],
+              click: 'https://osvalt16.github.io/michmich/crypto-bot-virtuel.html',
+            }),
+          });
+          console.log(r.ok ? 'notif envoyee:' : 'ECHEC notif HTTP ' + r.status + ':', c.short, c.zone);
+        } catch (e) { console.error('ECHEC notif:', c.short, e.message); }
       }
     }
   } else {
