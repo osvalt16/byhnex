@@ -97,7 +97,7 @@
 
   <table>
     <thead>
-      <tr><th>Crypto</th><th>Prix (temps réel)</th><th>24h</th><th>RSI</th><th>Tendance</th><th>Signal</th><th>Position du bot</th><th>Valeur</th></tr>
+      <tr><th>Crypto</th><th>Prix (temps réel)</th><th>24h</th><th>RSI</th><th>Tendance</th><th>Signal</th><th>Position du bot</th></tr>
     </thead>
     <tbody id="tbody"></tbody>
   </table>
@@ -481,8 +481,7 @@ function render() {
       <td>${rsi !== null && rsi !== undefined ? '<span class="' + (rsi < BUY_BELOW ? 'rsi-buy' : rsi > SELL_ABOVE ? 'rsi-sell' : '') + '">' + rsi.toFixed(1) + '</span>' : '—'}</td>
       <td>${trendHtml(trendNow[coin.sym])}</td>
       <td>${signalHtml(rsi, trendNow[coin.sym])}</td>
-      <td>${pos ? pos.qty.toLocaleString('fr-FR', { maximumFractionDigits: 6 }) + ' ' + coin.short : '<span style="color:var(--muted)">—</span>'}</td>
-      <td class="val">${pos && l ? '<strong>' + fmt(pos.qty * l.price, 2) + '</strong>' : '<span style="color:var(--muted)">—</span>'}</td>`;
+      <td>${pos ? pos.qty.toLocaleString('fr-FR', { maximumFractionDigits: 6 }) + ' ' + coin.short : '<span style="color:var(--muted)">—</span>'}</td>`;
     tbody.appendChild(tr);
   }
   renderLog();
@@ -492,7 +491,7 @@ function render() {
 function updateRow(sym, prevPrice) {
   const tr = document.getElementById('row-' + sym);
   if (!tr) return;
-  const l = live[sym], pos = state.positions[sym];
+  const l = live[sym];
   const priceTd = tr.querySelector('.price');
   priceTd.innerHTML = '<strong>' + fmt(l.price) + '</strong>';
   if (prevPrice !== null && prevPrice !== l.price) {
@@ -501,7 +500,6 @@ function updateRow(sym, prevPrice) {
     priceTd.classList.add(l.price > prevPrice ? 'flash-up' : 'flash-down');
   }
   tr.querySelector('.p24').innerHTML = l.pct24h !== null ? `<span class="${l.pct24h >= 0 ? 'up' : 'down'}">${l.pct24h >= 0 ? '▲' : '▼'} ${Math.abs(l.pct24h).toFixed(2)} %</span>` : '—';
-  tr.querySelector('.val').innerHTML = pos ? '<strong>' + fmt(pos.qty * l.price, 2) + '</strong>' : '<span style="color:var(--muted)">—</span>';
 }
 
 function totalValue() {
