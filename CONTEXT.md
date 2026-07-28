@@ -46,8 +46,13 @@ avant toute discussion d'argent reel.
 - `crypto-dashboard.html` : suivi de prix top 20 (API CoinGecko, refresh 60 s) +
   portefeuille personnel (quantites, prix d'achat, P&L). Stockage : `crypto-portfolio-v1`.
 - `crypto-bot-virtuel.html` : bot paper trading. Prix temps reel via WebSocket Binance
-  (miniTicker), strategie RSI 14 sur bougies 15 min (achat < 30, vente > 70, 20 % du cash),
-  rattrapage des bougies manquees a l'ouverture. Stockage : `crypto-bot-v1`.
+  (miniTicker), strategie RSI 14 sur bougies 15 min (achat < 30 avec 10 % du cash,
+  vente > 70), frais virtuels de 0,60 % par ordre (comme Coinbase Advanced),
+  rattrapage des bougies manquees a l'ouverture. Univers : top 10 par capitalisation
+  hors stablecoins, filtre aux cryptos tradables sur Coinbase, reclasse toutes les 15 min.
+  Colonne tendance via moyennes 50/200 (bougies 15 min) + barre marche Bitcoin (50/200 jours).
+  Les bougies ne sont retelechargees qu'apres chaque cloture 15 min.
+  Stockage : `crypto-bot-v3` (+ `crypto-bot-alerts` pour l'etat des alertes).
 - `CONTEXT.md` : ce fichier.
 
 ## Regles APIs et donnees
