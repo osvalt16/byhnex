@@ -153,9 +153,14 @@ let state = load();
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(LS_KEY));
-    if (s && s.cash !== undefined) { s.fees = s.fees || 0; return s; }
+    if (s && s.cash !== undefined) {
+      s.fees = s.fees || 0;
+      s.tradeCount = s.tradeCount ?? s.trades.length;
+      for (const p of Object.values(s.positions || {})) if (p.cost === undefined) p.cost = p.qty * p.avgPrice;
+      return s;
+    }
   } catch(e) {}
-  return { cash: START_CASH, positions: {}, trades: [], lastCandle: {}, fees: 0, startedAt: Date.now() };
+  return { cash: START_CASH, positions: {}, trades: [], lastCandle: {}, fees: 0, tradeCount: 0, startedAt: Date.now() };
 }
 function save() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 
@@ -245,15 +250,17 @@ function executeCandle(coin, candle, rsi, isReplay) {
     state.fees += fee;
     state.positions[sym] = { qty, avgPrice: candle.close, cost: amount };
     state.trades.unshift({ t: candle.closeTime, side: 'ACHAT', sym, short: coin.short, price: candle.close, amount, fee, rsi, replay: !!isReplay });
+    state.tradeCount++;
   } else if (pos && rsi > SELL_ABOVE) {
     const gross = pos.qty * candle.close;
     const fee = gross * FEE_RATE;
     const proceeds = gross - fee;
-    const pnl = proceeds - (pos.cost !== undefined ? pos.cost : pos.qty * pos.avgPrice);
+    const pnl = proceeds - pos.cost;
     state.cash += proceeds;
     state.fees += fee;
     delete state.positions[sym];
     state.trades.unshift({ t: candle.closeTime, side: 'VENTE', sym, short: coin.short, price: candle.close, amount: proceeds, fee, pnl, rsi, replay: !!isReplay });
+    state.tradeCount++;
   }
   if (state.trades.length > 200) state.trades.length = 200;
 }
@@ -510,7 +517,7 @@ function updateCards() {
   perfEl.className = 'value ' + (pnl >= 0 ? 'up' : 'down');
   document.getElementById('perf-since').textContent = 'Depuis le ' + new Date(state.startedAt).toLocaleDateString('fr-FR');
   document.getElementById('cash').textContent = fmt(state.cash, 2);
-  document.getElementById('ntrades').textContent = state.trades.length;
+  document.getElementById('ntrades').textContent = state.tradeCount;
   document.getElementById('fees').textContent = fmt(state.fees, 2);
 }
 
@@ -543,7 +550,7 @@ document.getElementById('alerts').addEventListener('click', async () => {
 
 document.getElementById('reset').addEventListener('click', () => {
   if (confirm('Réinitialiser le bot à 1 000 € virtuels ? Tout l\'historique sera effacé.')) {
-    state = { cash: START_CASH, positions: {}, trades: [], lastCandle: {}, fees: 0, startedAt: Date.now() };
+    state = { cash: START_CASH, positions: {}, trades: [], lastCandle: {}, fees: 0, tradeCount: 0, startedAt: Date.now() };
     save(); render();
     document.getElementById('catchup').innerHTML = '';
   }
