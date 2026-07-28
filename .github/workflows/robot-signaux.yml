@@ -24,6 +24,8 @@ jobs:
       - name: Calcule les signaux et notifie si entree en zone
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          COINBASE_KEY_NAME: ${{ secrets.COINBASE_KEY_NAME }}
+          COINBASE_PRIVATE_KEY: ${{ secrets.COINBASE_PRIVATE_KEY }}
         run: node scripts/build-data.mjs
       - name: Publie data.json + widget.txt sur la branche data
         run: |

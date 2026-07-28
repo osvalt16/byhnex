@@ -4,6 +4,46 @@
 // La logique replique exactement celle de crypto-bot-virtuel.html.
 'use strict';
 
+import { createPrivateKey, createSign, randomBytes } from 'node:crypto';
+
+// --- Positions reelles Coinbase (optionnel : actif si les secrets existent) ---
+// Cle API en LECTURE SEULE uniquement, stockee dans les secrets GitHub Actions.
+// Les positions ne sont JAMAIS publiees sur la branche data (repo public) :
+// elles n'apparaissent que dans les notifications privees ntfy.
+function cbJwt(keyName, pem, method, pathname) {
+  const now = Math.floor(Date.now() / 1000);
+  const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const input = b64({ alg: 'ES256', kid: keyName, typ: 'JWT', nonce: randomBytes(16).toString('hex') })
+    + '.' + b64({ sub: keyName, iss: 'cdp', nbf: now, exp: now + 120, uri: `${method} api.coinbase.com${pathname}` });
+  const sig = createSign('SHA256').update(input).end()
+    .sign({ key: createPrivateKey(pem), dsaEncoding: 'ieee-p1363' }).toString('base64url');
+  return input + '.' + sig;
+}
+
+async function fetchPositions() {
+  const keyName = process.env.COINBASE_KEY_NAME, pem = process.env.COINBASE_PRIVATE_KEY;
+  if (!keyName || !pem) return null;
+  try {
+    const pos = {};
+    let cursor = null;
+    for (let page = 0; page < 5; page++) {
+      const pathname = '/api/v3/brokerage/accounts';
+      const url = 'https://api.coinbase.com' + pathname + '?limit=250' + (cursor ? '&cursor=' + cursor : '');
+      const res = await fetch(url, { headers: { Authorization: 'Bearer ' + cbJwt(keyName, pem, 'GET', pathname) } });
+      if (!res.ok) { console.error('coinbase HTTP', res.status, (await res.text()).slice(0, 120)); return null; }
+      const j = await res.json();
+      for (const a of j.accounts || []) {
+        const qty = parseFloat(a.available_balance?.value || 0) + parseFloat(a.hold?.value || 0);
+        if (qty > 0 && a.currency && !STABLES.has(a.currency.toLowerCase()) && !['EUR','USD','GBP'].includes(a.currency)) pos[a.currency] = qty;
+      }
+      if (!j.has_next || !j.cursor) break;
+      cursor = j.cursor;
+    }
+    console.log('positions coinbase detectees:', Object.keys(pos).length);
+    return pos;
+  } catch (e) { console.error('coinbase:', e.message); return null; }
+}
+
 const STABLES = new Set(['usdt','usdc','usds','usde','dai','fdusd','tusd','pyusd','busd','usdp','gusd','eurc','eurt','usdtb','susds','usd1','bsc-usd','steth','wsteth','weeth','wbtc','cbbtc','weth','reth','wbeth']);
 const RSI_PERIOD = 14, BUY_BELOW = 30, SELL_ABOVE = 70, INTERVAL = '15m';
 
@@ -67,6 +107,7 @@ async function main() {
   for (const t of rates) RATES[t.symbol.replace('EUR', '')] = parseFloat(t.price);
   const conv = coin => coin.quote === 'EUR' ? 1 : (RATES[coin.quote] || RATES.USDT) ? 1 / (RATES[coin.quote] || RATES.USDT) : null;
 
+  const positions = await fetchPositions();
   const coins = await buildCoins(pairs, cbSet, top);
   if (coins.length < 5) throw new Error('liste de cryptos trop courte, abandon');
 
@@ -154,7 +195,9 @@ async function main() {
             body: JSON.stringify({
               topic,
               title: (isBuy ? "Zone d'achat — " : 'Zone de vente — ') + c.short,
-              message: `${c.name} — RSI ${c.rsi} · prix ${fmtPx(c.price)} € · tendance ${tLabel}${warn}. Info, pas un conseil financier.`,
+              message: `${c.name} — RSI ${c.rsi} · prix ${fmtPx(c.price)} € · tendance ${tLabel}${warn}`
+                + (positions && positions[c.short] ? ` 💼 Tu détiens ${positions[c.short].toLocaleString('fr-FR', { maximumFractionDigits: 6 })} ${c.short}.` : '')
+                + ' Info, pas un conseil financier.',
               priority: 4,
               tags: [isBuy ? 'green_circle' : 'red_circle'],
               click: 'https://osvalt16.github.io/michmich/crypto-bot-virtuel.html',

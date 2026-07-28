@@ -15,6 +15,9 @@ avant toute discussion d'argent reel.
 
 - Aucun ordre reel, jamais : le bot ne touche que de l'argent virtuel.
 - Aucune cle API d'exchange dans le code, meme en test.
+  Exception decidee le 28/07/2026 : une cle Coinbase en LECTURE SEULE peut etre
+  stockee dans les secrets GitHub Actions (jamais dans le code, jamais publiee).
+  Les positions reelles n'apparaissent que dans les notifications ntfy privees.
 - Aucune donnee envoyee vers un serveur : tout reste dans le navigateur.
 - Toujours afficher l'avertissement « pas un conseil financier » dans l'UI.
 - Zero dependance payante : uniquement des APIs publiques gratuites.
