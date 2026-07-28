@@ -146,7 +146,7 @@ async function main() {
       if (pz !== undefined && pz !== c.zone && (c.zone === 'buy' || c.zone === 'sell')) {
         const isBuy = c.zone === 'buy';
         const warn = isBuy && c.trend === 'down' ? ' ⚠️ couteau qui tombe' : (!isBuy && c.trend === 'up' ? ' ⚠️ tendance forte' : '');
-        const tLabel = c.trend === 'up' ? '📈 haussière' : c.trend === 'down' ? '📉 baissière' : c.trend === 'flat' ? '➖ neutre' : 'inconnue';
+        const tLabel = c.trend === 'up' ? '↗ haussière' : c.trend === 'down' ? '↘ baissière' : c.trend === 'flat' ? '→ neutre' : 'inconnue';
         // publication JSON : les en-tetes HTTP n'acceptent pas l'UTF-8 (accents, tirets)
         try {
           const r = await fetch('https://ntfy.sh', {
