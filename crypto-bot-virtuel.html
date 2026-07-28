@@ -279,9 +279,12 @@ const zoneOf = rsi => rsi === null || rsi === undefined ? null : (rsi < BUY_BELO
 const baseTitle = document.title;
 let flashTimer = null;
 
+let audioCtx = null;
 function beep(freq) {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = audioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.frequency.value = freq; o.type = 'sine';
     g.gain.setValueAtTime(0.25, ctx.currentTime);
