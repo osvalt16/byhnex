@@ -64,6 +64,9 @@ avant toute discussion d'argent reel.
 - `rainbow-doge.html` : Rainbow Chart du Dogecoin. Historique DOGE/USD depuis 2014
   (CoinCodex, CORS ouvert) + prix live Binance, regression log calculee dans le
   navigateur, 9 bandes arc-en-ciel dessinees en canvas, prolongees 18 mois.
+- `saisonnalite-btc.html` : tableau des rendements mensuels BTC (annees x mois)
+  depuis 2014, heatmap verte/rouge, stats par mois, mois en cours au prix live
+  Binance (refresh 60 s). Donnees CoinCodex.
 - `CONTEXT.md` : ce fichier.
 
 ## Regles APIs et donnees
