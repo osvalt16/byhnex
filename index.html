@@ -54,7 +54,7 @@
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
   .tagline { color: var(--muted); margin-bottom: 40px; font-size: 15px; letter-spacing: 0.2px; }
-  .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 26px; text-align: left; }
+  .tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-bottom: 26px; text-align: left; }
   @media (max-width: 640px) { .tools { grid-template-columns: 1fr; } h1 { font-size: 30px; } .logo { width: 84px; height: 84px; } }
   a.tool {
     display: block; background: var(--card); border: 1px solid var(--border); border-radius: 18px;
@@ -101,6 +101,12 @@
       <h2>Bot Virtuel</h2>
       <p>Un bot qui trade automatiquement 1 000 € fictifs avec une stratégie RSI, en temps réel. Il rattrape tout seul les heures manquées.</p>
       <span class="live"><span class="dot"></span>Temps réel WebSocket</span>
+    </a>
+    <a class="tool" href="rainbow-doge.html">
+      <div class="icon">🌈</div>
+      <h2>Rainbow Chart DOGE</h2>
+      <p>Tout l'historique du Dogecoin depuis 2014 sur des bandes arc-en-ciel logarithmiques. Où en est le meme-coin aujourd'hui ?</p>
+      <span class="live"><span class="dot"></span>Historique 2014 → aujourd'hui</span>
     </a>
   </div>
 

@@ -61,6 +61,9 @@ avant toute discussion d'argent reel.
   `data.json` + `widget.txt` sur la branche `data` (pour le widget KWGT du telephone),
   et envoie une notification push ntfy a chaque entree en zone achat/vente
   (canal secret dans le secret Actions `NTFY_TOPIC`).
+- `rainbow-doge.html` : Rainbow Chart du Dogecoin. Historique DOGE/USD depuis 2014
+  (CoinCodex, CORS ouvert) + prix live Binance, regression log calculee dans le
+  navigateur, 9 bandes arc-en-ciel dessinees en canvas, prolongees 18 mois.
 - `CONTEXT.md` : ce fichier.
 
 ## Regles APIs et donnees
