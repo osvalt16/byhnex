@@ -165,17 +165,37 @@ async function main() {
   const step = (rmax - rmin) / BANDS.length;
   const edge = (t, i) => fit(t) + rmin + i * step;
 
-  const last = pts[pts.length - 1];
-  const curBand = Math.max(0, Math.min(BANDS.length - 1, Math.floor((Math.log(last.price) - fit(last.t) - rmin) / step)));
-  document.getElementById('status-bar').innerHTML =
-    '<span>Ð Dogecoin aujourd\'hui : <strong>' + last.price.toLocaleString('fr-FR', { maximumFractionDigits: 5 }) + ' $</strong></span>' +
-    '<span>Bande actuelle : <span class="band-chip" style="background:' + BANDS[curBand].c + '">' + BANDS[curBand].label + '</span></span>' +
-    '<span style="font-size:12px">' + pts.length + ' points · 2014 → aujourd\'hui</span>';
-
+  const bandOf = (price, t) => Math.max(0, Math.min(BANDS.length - 1, Math.floor((Math.log(price) - fit(t) - rmin) / step)));
+  const setStatus = (price, bandIdx, live) => {
+    document.getElementById('status-bar').innerHTML =
+      '<span>Ð Dogecoin ' + (live ? '<span style="color:var(--green);font-size:11px">● EN DIRECT</span>' : 'aujourd\'hui') + ' : <strong>' + price.toLocaleString('fr-FR', { maximumFractionDigits: 5 }) + ' $</strong></span>' +
+      '<span>Bande actuelle : <span class="band-chip" style="background:' + BANDS[bandIdx].c + '">' + BANDS[bandIdx].label + '</span></span>' +
+      '<span style="font-size:12px">' + pts.length + ' points · 2014 → aujourd\'hui</span>';
+  };
+  let curBand = bandOf(pts[pts.length - 1].price, pts[pts.length - 1].t);
+  setStatus(pts[pts.length - 1].price, curBand, false);
   draw(pts, edge, curBand);
   document.getElementById('legend').innerHTML = [...BANDS].reverse()
     .map(bd => '<span><i style="background:' + bd.c + '"></i>' + bd.label + '</span>').join('');
   window.addEventListener('resize', () => draw(pts, edge, curBand));
+
+  // temps reel : le point du jour suit chaque tick Binance
+  let lastDraw = 0;
+  function connectLive() {
+    const ws = new WebSocket('wss://stream.binance.com:9443/ws/dogeusdt@miniTicker');
+    ws.onmessage = ev => {
+      const price = parseFloat(JSON.parse(ev.data).c);
+      if (!price) return;
+      pts[pts.length - 1] = { t: Date.now(), price };
+      curBand = bandOf(price, Date.now());
+      setStatus(price, curBand, true);
+      const now = Date.now();
+      if (now - lastDraw > 2000) { lastDraw = now; draw(pts, edge, curBand); }
+    };
+    ws.onclose = () => setTimeout(connectLive, 3000);
+    ws.onerror = () => ws.close();
+  }
+  connectLive();
 }
 
 function draw(pts, edge, curBand) {
