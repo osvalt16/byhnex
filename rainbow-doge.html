@@ -62,7 +62,13 @@
   #status-bar { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; }
   #status-bar strong { color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 17px; }
   .band-chip { display: inline-block; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 13px; color: #04060d; }
-  canvas { width: 100%; height: auto; display: block; border-radius: 8px; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 8px; cursor: crosshair; touch-action: pan-y; }
+  #tooltip {
+    display: none; position: absolute; background: rgba(6,10,20,0.94);
+    border: 1px solid var(--border-strong); border-radius: 10px; padding: 8px 12px;
+    font-size: 12px; line-height: 1.55; pointer-events: none; z-index: 5; color: var(--text);
+    box-shadow: 0 8px 24px -10px var(--glow-cyan); white-space: nowrap;
+  }
   .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 14px; font-size: 11.5px; color: var(--muted); }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
@@ -92,6 +98,7 @@
 
   <div class="panel">
     <canvas id="chart"></canvas>
+    <div id="tooltip"></div>
     <div class="legend" id="legend"></div>
   </div>
 
@@ -105,13 +112,15 @@
     📈 Prix journaliers DOGE/USD depuis janvier 2014 (échantillonnés, source CoinCodex) + prix du jour en direct via Binance.<br>
     📐 Méthode : régression ln(prix) = a + b·ln(jours depuis la création du Dogecoin, 6 déc. 2013),
     bandes réparties uniformément (échelle logarithmique) autour de la tendance, prolongées 18 mois dans le futur.<br>
-    🔄 Recharge la page pour rafraîchir. Échelle verticale logarithmique : chaque graduation ×10.
+    👆 Survole ou touche le graphique : date, prix en $ et en € (taux EUR/USD en direct), et bande de l'époque.<br>
+    🔄 Prix du jour en direct via WebSocket. Échelle verticale logarithmique : chaque graduation ×10.
   </p>
 </div>
 
 <script>
 'use strict';
 const GENESIS = Date.UTC(2013, 11, 6);
+let view = null, hoverPt = null, eurRate = null;
 const BANDS = [
   { c: '#4527a0', label: '🧯 Soldes d\'incendie' },
   { c: '#1e88e5', label: 'ACHÈTE !' },
@@ -196,6 +205,37 @@ async function main() {
     ws.onerror = () => ws.close();
   }
   connectLive();
+
+  // survol / toucher : prix en $ et en € au point le plus proche
+  fetch('https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT')
+    .then(r => r.ok ? r.json() : null).then(j => { if (j) eurRate = parseFloat(j.price); }).catch(() => {});
+  const cv = document.getElementById('chart');
+  const tip = document.getElementById('tooltip');
+  const fmtP = v => v.toLocaleString('fr-FR', { maximumFractionDigits: v < 0.01 ? 6 : 4 });
+  function showAt(clientX) {
+    if (!view) return;
+    const rect = cv.getBoundingClientRect();
+    const t = view.t0 + (clientX - rect.left - view.ML) / (view.W - view.ML - view.MR) * (view.t1 - view.t0);
+    let best = 0, bd = Infinity;
+    for (let i = 0; i < pts.length; i++) { const d = Math.abs(pts[i].t - t); if (d < bd) { bd = d; best = i; } }
+    const pt = pts[best];
+    hoverPt = pt;
+    const eur = eurRate ? pt.price / eurRate : null;
+    tip.innerHTML = '<strong>' + new Date(pt.t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) + '</strong><br>' +
+      fmtP(pt.price) + ' $' + (eur !== null ? ' · ' + fmtP(eur) + ' €' : '') +
+      '<br><span style="color:' + BANDS[bandOf(pt.price, pt.t)].c + '">■</span> <span style="color:var(--muted)">' + BANDS[bandOf(pt.price, pt.t)].label + '</span>';
+    tip.style.display = 'block';
+    const cx = cv.offsetLeft + view.xs(pt.t), cy = cv.offsetTop + view.ys(Math.log(pt.price));
+    tip.style.left = Math.min(cv.offsetLeft + view.W - 170, Math.max(cv.offsetLeft, cx + 14)) + 'px';
+    tip.style.top = Math.max(0, cy - 62) + 'px';
+    requestAnimationFrame(() => draw(pts, edge, curBand));
+  }
+  const hide = () => { hoverPt = null; tip.style.display = 'none'; draw(pts, edge, curBand); };
+  cv.addEventListener('mousemove', e => showAt(e.clientX));
+  cv.addEventListener('mouseleave', hide);
+  cv.addEventListener('touchstart', e => showAt(e.touches[0].clientX), { passive: true });
+  cv.addEventListener('touchmove', e => showAt(e.touches[0].clientX), { passive: true });
+  cv.addEventListener('touchend', () => setTimeout(hide, 1500));
 }
 
 function draw(pts, edge, curBand) {
@@ -216,6 +256,7 @@ function draw(pts, edge, curBand) {
   lo -= 0.3; hi += 0.3;
   const xs = t => ML + (t - t0) / (t1 - t0) * (W - ML - MR);
   const ys = lnp => MT + (hi - lnp) / (hi - lo) * (H - MT - MB);
+  view = { t0, t1, ML, MR, W, xs, ys };
 
   ctx.clearRect(0, 0, W, H);
   const STEPS = 160;
@@ -266,6 +307,14 @@ function draw(pts, edge, curBand) {
   const lp = pts[pts.length - 1];
   ctx.beginPath(); ctx.arc(xs(lp.t), ys(Math.log(lp.price)), 4, 0, 7);
   ctx.fillStyle = '#f2f8ff'; ctx.fill();
+  if (hoverPt) {
+    const hx = xs(hoverPt.t), hy = ys(Math.log(hoverPt.price));
+    ctx.strokeStyle = 'rgba(62,198,255,0.6)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(hx, MT); ctx.lineTo(hx, H - MB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(hx, hy, 5, 0, 7);
+    ctx.strokeStyle = '#3ec6ff'; ctx.lineWidth = 2; ctx.stroke();
+  }
 }
 
 main();
