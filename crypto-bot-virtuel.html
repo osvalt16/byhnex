@@ -128,7 +128,24 @@
     padding: 13px 18px; font-size: 12.5px; color: var(--gold); margin-bottom: 18px; line-height: 1.6;
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
   }
-  @media (max-width: 700px) { body { padding: 16px 12px 40px; } h1 { font-size: 19px; } .brand img { width: 38px; height: 38px; } }
+  details.note-box { flex: 1; min-width: 240px; }
+  details.note-box summary { cursor: pointer; color: var(--muted); font-size: 12.5px; font-weight: 600; padding: 4px 0; list-style-position: inside; }
+  details.note-box summary:hover { color: var(--accent); }
+  details.note-box[open] summary { margin-bottom: 8px; }
+  @media (max-width: 700px) {
+    body { padding: 16px 10px 40px; }
+    h1 { font-size: 19px; }
+    .brand img { width: 38px; height: 38px; }
+    .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .card { padding: 12px 14px; }
+    .card .value { font-size: 19px; }
+    .strategy-bar { font-size: 12px; padding: 10px 12px; }
+    table { min-width: 0; }
+    th, td { padding: 10px 7px; font-size: 12.5px; }
+    th:nth-child(3), td:nth-child(3), th:nth-child(5), td:nth-child(5) { display: none; }
+    .sig { font-size: 10.5px; padding: 3px 8px; }
+    .log-entry { font-size: 12px; padding: 8px 12px; }
+  }
 </style>
 </head>
 <body>
@@ -194,6 +211,8 @@
   </div>
 
   <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <details class="note-box">
+    <summary>ℹ️ Comment fonctionne ce bot</summary>
     <p class="note">
       🏆 Liste : top 10 par capitalisation (hors stablecoins), limité aux cryptos tradables sur Coinbase (USDC/USD) — reclassé en direct toutes les 15 min. Prix sans paire EUR convertis depuis USDC/USDT. Exclus : TRON et LEO (pas sur Coinbase), HYPE (aucun flux de données Binance).<br>
       📡 Prix : WebSocket Binance (temps réel, tick par tick) · Stratégie évaluée à la clôture de chaque bougie de 15 min.<br>
@@ -203,6 +222,7 @@
       🔄 PC éteint ou page fermée ? À la réouverture, le bot <strong>rejoue automatiquement</strong> toutes les bougies manquées.<br>
       💾 Tout est sauvegardé dans ton navigateur.
     </p>
+    </details>
     <button id="reset">Réinitialiser le bot</button>
   </div>
 </div>

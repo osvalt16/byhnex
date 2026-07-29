@@ -76,7 +76,17 @@
   }
   .note { color: var(--muted); font-size: 12px; line-height: 1.7; }
   .error { display: none; background: rgba(255,95,118,0.08); border: 1px solid rgba(255,95,118,0.4); color: var(--red); padding: 13px 16px; border-radius: 12px; margin-bottom: 16px; font-size: 13px; }
-  @media (max-width: 700px) { body { padding: 16px 10px 40px; } h1 { font-size: 18px; } .brand img { width: 38px; height: 38px; } }
+  .swipe-hint { display: none; }
+  @media (max-width: 700px) {
+    body { padding: 16px 10px 40px; }
+    h1 { font-size: 18px; }
+    .brand img { width: 38px; height: 38px; }
+    th, td { padding: 6px 5px; font-size: 11px; }
+    table { min-width: 700px; }
+    .swipe-hint { display: block; color: var(--accent); font-size: 12px; margin-bottom: 8px; }
+    #status-bar { font-size: 13px; }
+    #status-bar strong { font-size: 15px; }
+  }
 </style>
 </head>
 <body>
@@ -94,6 +104,7 @@
   <div class="panel"><div id="status-bar">⏳ Chargement des rendements mensuels depuis 2014…</div></div>
 
   <div class="panel">
+    <div class="swipe-hint">👉 Fais glisser le tableau vers la gauche pour voir toute l'année</div>
     <div class="table-wrap" id="table-wrap"></div>
   </div>
 
