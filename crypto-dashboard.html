@@ -123,15 +123,6 @@
       <div class="value" id="pf-value">—</div>
       <div class="sub" id="pf-value-sub"></div>
     </div>
-    <div class="card">
-      <div class="label">Total investi</div>
-      <div class="value" id="pf-invested">—</div>
-    </div>
-    <div class="card">
-      <div class="label">Profit / Perte</div>
-      <div class="value" id="pf-pnl">—</div>
-      <div class="sub" id="pf-pnl-pct"></div>
-    </div>
   </div>
 
   <div class="table-wrap">
@@ -145,19 +136,18 @@
         <th class="hide-mobile">7j</th>
         <th class="hide-mobile">Cap. marché</th>
         <th>Ma quantité</th>
-        <th class="hide-mobile">Mon prix d'achat (€)</th>
         <th>Ma valeur</th>
       </tr>
     </thead>
     <tbody id="tbody">
-      <tr><td colspan="9" style="text-align:center; color: var(--muted); padding: 30px;">Chargement des données CoinGecko…</td></tr>
+      <tr><td colspan="8" style="text-align:center; color: var(--muted); padding: 30px;">Chargement des données CoinGecko…</td></tr>
     </tbody>
   </table>
   </div>
 
   <p class="note">
     📡 Données : API gratuite CoinGecko · Rafraîchissement automatique toutes les 60 secondes.<br>
-    💾 Tes quantités et prix d'achat sont sauvegardés dans ton navigateur (rien n'est envoyé nulle part).<br>
+    💾 Tes quantités sont sauvegardées dans ton navigateur (rien n'est envoyé nulle part).<br>
     ⚠️ Ceci est un outil de suivi, pas un conseil financier. Aucun profit n'est garanti en crypto.
   </p>
 </div>
@@ -196,15 +186,14 @@ function render(data) {
   lastData = data;
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
-  let totalValue = 0, totalInvested = 0;
+  let totalValue = 0, nbHeld = 0;
 
   data.forEach(c => {
     const p = portfolio[c.id] || {};
     const qty = parseFloat(p.qty) || 0;
-    const buy = parseFloat(p.buy) || 0;
     const myValue = qty * c.current_price;
     totalValue += myValue;
-    totalInvested += qty * buy;
+    if (qty > 0) nbHeld++;
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -215,7 +204,6 @@ function render(data) {
       <td class="hide-mobile">${pct(c.price_change_percentage_7d_in_currency)}</td>
       <td class="hide-mobile" style="color:var(--muted)">${fmtBig(c.market_cap)}</td>
       <td><input class="qty" type="number" step="any" min="0" placeholder="0" value="${p.qty ?? ''}" data-id="${c.id}" data-field="qty"></td>
-      <td class="hide-mobile"><input class="qty" type="number" step="any" min="0" placeholder="0" value="${p.buy ?? ''}" data-id="${c.id}" data-field="buy"></td>
       <td>${qty > 0 ? '<strong>' + fmtEur(myValue, 2) + '</strong>' : '<span style="color:var(--muted)">—</span>'}</td>
     `;
     tbody.appendChild(tr);
@@ -232,18 +220,9 @@ function render(data) {
   });
 
   document.getElementById('pf-value').textContent = fmtEur(totalValue, 2);
-  document.getElementById('pf-invested').textContent = fmtEur(totalInvested, 2);
-  const pnl = totalValue - totalInvested;
-  const pnlEl = document.getElementById('pf-pnl');
-  const pnlPctEl = document.getElementById('pf-pnl-pct');
-  pnlEl.textContent = (pnl >= 0 ? '+' : '') + fmtEur(pnl, 2);
-  pnlEl.className = 'value ' + (pnl >= 0 ? 'up' : 'down');
-  if (totalInvested > 0) {
-    const pp = (pnl / totalInvested) * 100;
-    pnlPctEl.innerHTML = pct(pp);
-  } else {
-    pnlPctEl.textContent = 'Saisis tes quantités et prix d’achat ci-dessous';
-  }
+  document.getElementById('pf-value-sub').textContent = nbHeld > 0
+    ? nbHeld + ' crypto' + (nbHeld > 1 ? 's' : '') + ' détenue' + (nbHeld > 1 ? 's' : '')
+    : 'Saisis tes quantités ci-dessous';
 }
 
 async function refresh() {
