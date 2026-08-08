@@ -224,9 +224,23 @@ async function loadHistory(coin) {
   const pts = (j[coin.short] || []).map(p => ({ t: p[0] * 1000, price: p[1] })).filter(p => p.price > 0);
   if (pts.length < 60) throw new Error('historique trop court');
   pts.sort((a, b) => a.t - b.t);
-  const entry = { pts, model: buildModel(pts) };
+  // Les tout premiers jours d'une crypto ont une liquidite quasi nulle : le prix
+  // affiche peut etre delirant (Zcash a « cote » 5 942 $ le jour de son lancement).
+  // On retire ces points aberrants du debut, compares a la mediane des 90 jours suivants.
+  const dropped = trimLaunchOutliers(pts);
+  const entry = { pts, model: buildModel(pts), dropped };
   cache[coin.short] = entry;
   return entry;
+}
+
+function trimLaunchOutliers(pts) {
+  const ref = pts.slice(0, 40).map(p => p.price).sort((a, b) => a - b);
+  const median = ref[Math.floor(ref.length / 2)];
+  let i = 0;
+  const firstMonth = pts[0].t + 30 * 86400000;
+  while (i < pts.length - 60 && pts[i].t < firstMonth && pts[i].price > median * 5) i++;
+  if (i > 0) pts.splice(0, i);
+  return i;
 }
 
 function buildModel(pts) {
@@ -247,7 +261,8 @@ function buildModel(pts) {
   const edge = (t, i) => fit(t) + rmin + i * step;
   const bandOf = (price, t) => Math.max(0, Math.min(BANDS.length - 1, Math.floor((Math.log(price) - fit(t) - rmin) / step)));
   const last = pts[pts.length - 1];
-  return { genesis, fit, edge, bandOf, step, years: (last.t - pts[0].t) / (365.25 * 86400000), curBand: bandOf(last.price, last.t) };
+  return { genesis, fit, edge, bandOf, step, slope: b,
+           years: (last.t - pts[0].t) / (365.25 * 86400000), curBand: bandOf(last.price, last.t) };
 }
 
 /* ---------- affichage ---------- */
@@ -266,7 +281,12 @@ function setStatus(coin, price, live) {
     '<span><strong>' + fmtP(price) + ' $</strong>' + (eur !== null ? ' <span style="font-size:12px">· ' + fmtP(eur) + ' €</span>' : '') + '</span>' +
     '<span>Bande : <span class="band-chip" style="background:' + BANDS[band].c + '">' + BANDS[band].label + '</span></span>' +
     '<span style="font-size:12px">' + e.pts.length + ' points · ' + e.model.years.toFixed(1) + ' ans d\'historique' +
-      (e.model.years < 4 ? ' <span class="hist-note">⚠️ court : modèle peu fiable</span>' : '') + '</span>';
+      (e.model.years < 4 ? ' <span class="hist-note">⚠️ court : modèle peu fiable</span>' : '') +
+      (e.dropped ? ' <span class="hist-note" title="Prix de lancement aberrants, liquidité quasi nulle">⚠️ ' + e.dropped + ' point(s) de lancement écarté(s)</span>' : '') +
+      '</span>' +
+    (e.model.slope <= 0
+      ? '<span class="hist-note">⚠️ Tendance de fond <strong>négative</strong> : le Rainbow Chart suppose une croissance de long terme — il n\'est pas adapté à cette crypto.</span>'
+      : '');
 }
 
 async function selectCoin(short) {
