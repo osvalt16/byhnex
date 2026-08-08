@@ -53,8 +53,11 @@ la page conserve uniquement la surveillance de marche et les signaux.
 - `signaux-crypto.html` : top 10 tradable sur Coinbase, prix temps reel WebSocket
   Binance, RSI 14 sur bougies 15 min, tendance 50/200, zones d'achat (<30) et de
   vente (>70), alertes navigateur. Aucune simulation de trading.
-- `rainbow-doge.html` : Rainbow Chart Dogecoin depuis 2014 (CoinCodex) + prix live
-  Binance, regression log calculee dans le navigateur, infobulle $/EUR au survol.
+- `rainbow-crypto.html` : Rainbow Chart des 10 cryptos du meme univers que la page
+  Signaux. Historique complet par crypto (CoinCodex) + prix live WebSocket Binance,
+  regression log et 9 bandes calculees dans le navigateur pour chaque crypto,
+  onglets synchronises avec le top 10 (resynchronisation toutes les 15 min),
+  infobulle $/EUR au survol. Avertissement si moins de 4 ans d'historique.
 - `saisonnalite-btc.html` : rendements mensuels BTC depuis 2014 en heatmap,
   mois en cours au prix live.
 - `scripts/build-data.mjs` + `.github/workflows/robot-signaux.yml` : toutes les 5 min,

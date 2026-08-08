@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Rainbow Chart — Byhnex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #04060d; --card: rgba(12,18,36,0.66); --border: rgba(96,140,255,0.14);
+    --border-strong: rgba(62,198,255,0.4);
+    --text: #e9eefb; --muted: #8391ad;
+    --green: #2be3a4; --red: #ff5f76; --accent: #3ec6ff; --violet: #9a6bff; --gold: #e6b95c;
+    --glow-cyan: rgba(62,198,255,0.3); --glow-violet: rgba(154,107,255,0.25);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    padding: 26px 20px 60px; position: relative;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(640px 420px at 15% -5%, var(--glow-cyan), transparent 65%),
+      radial-gradient(700px 480px at 90% 105%, var(--glow-violet), transparent 65%);
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(99,140,255,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,140,255,0.045) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 75%);
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand img { width: 46px; height: 46px; border-radius: 12px; filter: drop-shadow(0 0 14px var(--glow-cyan)); }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;
+    background: linear-gradient(94deg, #f2f8ff 5%, var(--accent) 55%, var(--violet));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  a.back { color: var(--muted); font-size: 13px; text-decoration: none; }
+  a.back:hover { color: var(--accent); }
+  .panel {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px; margin-bottom: 16px; position: relative; overflow: hidden;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  }
+  .panel::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(62,198,255,0.5), transparent);
+  }
+  #status-bar { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; }
+  #status-bar strong { color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 17px; }
+  .band-chip { display: inline-block; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 13px; color: #04060d; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 8px; cursor: crosshair; touch-action: pan-y; }
+  #tooltip {
+    display: none; position: absolute; background: rgba(6,10,20,0.94);
+    border: 1px solid var(--border-strong); border-radius: 10px; padding: 8px 12px;
+    font-size: 12px; line-height: 1.55; pointer-events: none; z-index: 5; color: var(--text);
+    box-shadow: 0 8px 24px -10px var(--glow-cyan); white-space: nowrap;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 14px; font-size: 11.5px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .warn {
+    background: rgba(230,185,92,0.06); border: 1px solid rgba(230,185,92,0.3); border-radius: 14px;
+    padding: 13px 18px; font-size: 12.5px; color: var(--gold); margin-bottom: 16px; line-height: 1.6;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  }
+  .note { color: var(--muted); font-size: 12px; line-height: 1.7; }
+  .error { display: none; background: rgba(255,95,118,0.08); border: 1px solid rgba(255,95,118,0.4); color: var(--red); padding: 13px 16px; border-radius: 12px; margin-bottom: 16px; font-size: 13px; }
+  @media (max-width: 700px) {
+    body { padding: 16px 10px 40px; }
+    h1 { font-size: 18px; }
+    .brand img { width: 38px; height: 38px; }
+    #status-bar { font-size: 13px; gap: 6px 16px; }
+    #status-bar strong { font-size: 15px; }
+    .panel { padding: 12px; }
+    .legend { font-size: 10.5px; gap: 6px 10px; }
+  }
+  .coin-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .coin-tab {
+    background: rgba(4,6,13,0.5); border: 1px solid var(--border); color: var(--muted);
+    border-radius: 999px; padding: 8px 15px; font-family: 'Inter', sans-serif; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: all 0.18s; white-space: nowrap;
+  }
+  .coin-tab:hover { border-color: var(--border-strong); color: var(--text); }
+  .coin-tab.active {
+    background: rgba(62,198,255,0.12); border-color: var(--accent); color: var(--accent);
+    box-shadow: 0 0 18px -7px var(--accent);
+  }
+  .coin-tab .band-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: middle; }
+  .hist-note { color: var(--gold); font-size: 11.5px; }
+  @media (max-width: 700px) { .coin-tab { padding: 7px 12px; font-size: 12px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand">
+      <img src="logo.png" alt="">
+      <h1>🌈 Rainbow Chart</h1>
+    </div>
+    <a class="back" href="index.html">← Accueil</a>
+  </header>
+
+  <div class="error" id="error"></div>
+
+  <div class="panel">
+    <h2 style="margin-bottom:10px">Crypto suivie — même top 10 que la page Signaux</h2>
+    <div class="coin-tabs" id="tabs"><span style="color:var(--muted);font-size:13px">⏳ Chargement du classement…</span></div>
+  </div>
+
+  <div class="panel"><div id="status-bar">⏳ Chargement de l'historique…</div></div>
+
+  <div class="panel">
+    <canvas id="chart"></canvas>
+    <div id="tooltip"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="warn">
+    ⚠️ Le Rainbow Chart est un <strong>repère visuel</strong>, pas un modèle scientifique : une régression
+    logarithmique colorée qui paraît sage une fois le passé connu. Il « repeint » son histoire à chaque
+    recalcul, et une crypto peut sortir de l'arc-en-ciel dans les deux sens. Ceci n'est pas un conseil financier.
+  </div>
+
+  <p class="note">
+    📈 Historique quotidien en dollars depuis les origines de chaque crypto (source CoinCodex) + prix en direct via WebSocket Binance.<br>
+    📐 Méthode : régression ln(prix) = a + b·ln(jours depuis le premier cours connu), puis 9 bandes réparties
+    uniformément en échelle logarithmique autour de la tendance, prolongées 18 mois.<br>
+    🔄 Le classement se rafraîchit toutes les 15 minutes : si une crypto entre dans le top 10, son onglet apparaît ici automatiquement.<br>
+    👆 Survole ou touche le graphique : date, prix en $ et en €, et bande de l'époque.
+  </p>
+</div>
+
+<script>
+'use strict';
+const BANDS = [
+  { c: '#4527a0', label: '🧯 Soldes d\'incendie' },
+  { c: '#1e88e5', label: 'ACHÈTE !' },
+  { c: '#26a69a', label: 'Accumule' },
+  { c: '#43a047', label: 'Encore pas cher' },
+  { c: '#c0ca33', label: 'HODL !' },
+  { c: '#fdd835', label: 'Est-ce une bulle ?' },
+  { c: '#fb8c00', label: 'FOMO intense' },
+  { c: '#f4511e', label: 'Vends. Sérieusement.' },
+  { c: '#c62828', label: '🔥 Bulle maximale' },
+];
+const STABLES = new Set(['usdt','usdc','usds','usde','dai','fdusd','tusd','pyusd','busd','usdp','gusd','eurc','eurt','usdtb','susds','usd1','bsc-usd','steth','wsteth','weeth','wbtc','cbbtc','weth','reth','wbeth']);
+const FALLBACK = [
+  { short: 'BTC', name: 'Bitcoin', wsSym: 'BTCUSDT', quote: 'USDT' },
+  { short: 'ETH', name: 'Ethereum', wsSym: 'ETHUSDT', quote: 'USDT' },
+  { short: 'DOGE', name: 'Dogecoin', wsSym: 'DOGEUSDT', quote: 'USDT' },
+];
+
+let COINS = [], current = null, ws = null, eurRate = null;
+let view = null, hoverPt = null;
+const cache = {};   // short -> { pts, model }
+const $ = id => document.getElementById(id);
+
+/* ---------- univers : identique a la page Signaux ---------- */
+async function buildCoins() {
+  try {
+    const [infoRes, topRes, cbRes] = await Promise.all([
+      fetch('https://api.binance.com/api/v3/exchangeInfo'),
+      fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=30&page=1'),
+      fetch('https://api.exchange.coinbase.com/products').catch(() => null),
+    ]);
+    if (!infoRes.ok || !topRes.ok) throw new Error('HTTP');
+    const info = await infoRes.json(), top = await topRes.json();
+    let cbSet = null;
+    if (cbRes && cbRes.ok) {
+      const prods = await cbRes.json();
+      cbSet = new Set(prods.filter(x => (x.quote_currency === 'USD' || x.quote_currency === 'USDC') && x.status === 'online' && !x.trading_disabled).map(x => x.base_currency));
+    }
+    const pairs = new Set(info.symbols.filter(s => s.status === 'TRADING').map(s => s.symbol));
+    const list = [];
+    for (const c of top) {
+      if (STABLES.has(c.symbol.toLowerCase())) continue;
+      const short = c.symbol.toUpperCase();
+      if (cbSet && !cbSet.has(short)) continue;
+      // pour le graphique en dollars, on prefere une paire USDT/USDC
+      const quote = ['USDT', 'USDC', 'EUR'].find(q => pairs.has(short + q));
+      if (quote && !list.some(x => x.short === short)) list.push({ short, name: c.name, wsSym: short + quote, quote });
+      if (list.length === 10) break;
+    }
+    COINS = list.length >= 5 ? list : FALLBACK;
+  } catch (e) {
+    console.warn('classement indisponible, liste de secours', e);
+    if (!COINS.length) COINS = FALLBACK;
+  }
+}
+
+function renderTabs() {
+  $('tabs').innerHTML = COINS.map(c => {
+    const m = cache[c.short] && cache[c.short].model;
+    const dot = m ? '<span class="band-dot" style="background:' + BANDS[m.curBand].c + '"></span>' : '';
+    return '<button class="coin-tab' + (current === c.short ? ' active' : '') + '" data-s="' + c.short + '">' + dot + c.short + '</button>';
+  }).join('');
+  for (const b of $('tabs').querySelectorAll('.coin-tab')) {
+    b.addEventListener('click', () => selectCoin(b.dataset.s));
+  }
+}
+
+/* ---------- historique + regression ---------- */
+async function loadHistory(coin) {
+  if (cache[coin.short]) return cache[coin.short];
+  const today = new Date().toISOString().slice(0, 10);
+  const res = await fetch('https://coincodex.com/api/coincodex/get_coin_history/' + coin.short + '/2010-01-01/' + today + '/3000');
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const j = await res.json();
+  const pts = (j[coin.short] || []).map(p => ({ t: p[0] * 1000, price: p[1] })).filter(p => p.price > 0);
+  if (pts.length < 60) throw new Error('historique trop court');
+  pts.sort((a, b) => a.t - b.t);
+  const entry = { pts, model: buildModel(pts) };
+  cache[coin.short] = entry;
+  return entry;
+}
+
+function buildModel(pts) {
+  const genesis = pts[0].t - 30 * 86400000;   // marge pour eviter ln(0)
+  const X = pts.map(p => Math.log((p.t - genesis) / 86400000));
+  const Y = pts.map(p => Math.log(p.price));
+  const n = X.length;
+  const mx = X.reduce((s, v) => s + v, 0) / n, my = Y.reduce((s, v) => s + v, 0) / n;
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++) { num += (X[i] - mx) * (Y[i] - my); den += (X[i] - mx) ** 2; }
+  const b = den === 0 ? 0 : num / den, a = my - b * mx;
+  const fit = t => a + b * Math.log(Math.max(1, (t - genesis) / 86400000));
+  let rmin = Infinity, rmax = -Infinity;
+  for (let i = 0; i < n; i++) { const r = Y[i] - fit(pts[i].t); if (r < rmin) rmin = r; if (r > rmax) rmax = r; }
+  const pad = (rmax - rmin) * 0.05 || 0.1;
+  rmin -= pad; rmax += pad;
+  const step = (rmax - rmin) / BANDS.length;
+  const edge = (t, i) => fit(t) + rmin + i * step;
+  const bandOf = (price, t) => Math.max(0, Math.min(BANDS.length - 1, Math.floor((Math.log(price) - fit(t) - rmin) / step)));
+  const last = pts[pts.length - 1];
+  return { genesis, fit, edge, bandOf, step, years: (last.t - pts[0].t) / (365.25 * 86400000), curBand: bandOf(last.price, last.t) };
+}
+
+/* ---------- affichage ---------- */
+const fmtP = v => v >= 1000 ? v.toLocaleString('fr-FR', { maximumFractionDigits: 0 })
+  : v.toLocaleString('fr-FR', { maximumFractionDigits: v < 0.01 ? 6 : 4 });
+
+function setStatus(coin, price, live) {
+  const e = cache[coin.short];
+  if (!e) return;
+  const band = e.model.bandOf(price, Date.now());
+  e.model.curBand = band;
+  const eur = eurRate ? price / eurRate : null;
+  $('status-bar').innerHTML =
+    '<span><strong style="color:var(--text)">' + coin.name + '</strong> ' +
+      (live ? '<span style="color:var(--green);font-size:11px">● EN DIRECT</span>' : '') + '</span>' +
+    '<span><strong>' + fmtP(price) + ' $</strong>' + (eur !== null ? ' <span style="font-size:12px">· ' + fmtP(eur) + ' €</span>' : '') + '</span>' +
+    '<span>Bande : <span class="band-chip" style="background:' + BANDS[band].c + '">' + BANDS[band].label + '</span></span>' +
+    '<span style="font-size:12px">' + e.pts.length + ' points · ' + e.model.years.toFixed(1) + ' ans d\'historique' +
+      (e.model.years < 4 ? ' <span class="hist-note">⚠️ court : modèle peu fiable</span>' : '') + '</span>';
+}
+
+async function selectCoin(short) {
+  const coin = COINS.find(c => c.short === short);
+  if (!coin) return;
+  current = short;
+  hoverPt = null;
+  $('tooltip').style.display = 'none';
+  renderTabs();
+  $('status-bar').innerHTML = '⏳ Chargement de l\'historique de ' + coin.name + '…';
+  try {
+    const e = await loadHistory(coin);
+    $('error').style.display = 'none';
+    if (current !== short) return;              // l'utilisateur a change entre-temps
+    setStatus(coin, e.pts[e.pts.length - 1].price, false);
+    draw();
+    renderTabs();
+    connectWS(coin);
+  } catch (err) {
+    $('error').style.display = 'block';
+    $('error').textContent = 'Historique indisponible pour ' + coin.short + ' (' + err.message + ').';
+    $('status-bar').textContent = '❌ Données indisponibles';
+  }
+}
+
+function connectWS(coin) {
+  if (ws) { try { ws.onclose = null; ws.close(); } catch (e) {} }
+  const sym = coin.wsSym.toLowerCase();
+  const sock = new WebSocket('wss://stream.binance.com:9443/ws/' + sym + '@miniTicker');
+  ws = sock;
+  let lastDraw = 0;
+  sock.onmessage = ev => {
+    if (current !== coin.short) return;
+    let price = parseFloat(JSON.parse(ev.data).c);
+    if (!price) return;
+    if (coin.quote === 'EUR' && eurRate) price *= eurRate;   // ramene en dollars
+    const e = cache[coin.short];
+    if (!e) return;
+    e.pts[e.pts.length - 1] = { t: Date.now(), price };
+    setStatus(coin, price, true);
+    const now = Date.now();
+    if (now - lastDraw > 2000) { lastDraw = now; draw(); }
+  };
+  sock.onclose = () => { if (ws === sock && current === coin.short) setTimeout(() => connectWS(coin), 3000); };
+  sock.onerror = () => sock.close();
+}
+
+function draw() {
+  const e = cache[current];
+  if (!e) return;
+  const pts = e.pts, edge = e.model.edge, curBand = e.model.curBand;
+  const canvas = $('chart');
+  const W = canvas.parentElement.clientWidth - 36;
+  const H = Math.max(320, Math.min(500, Math.round(W * 0.48)));
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const t0 = pts[0].t, t1 = Date.now() + 548 * 86400000;
+  const ML = 56, MR = 10, MT = 10, MB = 24;
+  let lo = Infinity, hi = -Infinity;
+  for (const t of [t0, t1]) { lo = Math.min(lo, edge(t, 0)); hi = Math.max(hi, edge(t, 9)); }
+  for (const p of pts) { lo = Math.min(lo, Math.log(p.price)); hi = Math.max(hi, Math.log(p.price)); }
+  lo -= 0.3; hi += 0.3;
+  const xs = t => ML + (t - t0) / (t1 - t0) * (W - ML - MR);
+  const ys = lnp => MT + (hi - lnp) / (hi - lo) * (H - MT - MB);
+  view = { t0, t1, ML, MR, W, xs, ys };
+
+  ctx.clearRect(0, 0, W, H);
+  const STEPS = 160;
+  for (let i = 0; i < 9; i++) {
+    ctx.beginPath();
+    for (let s = 0; s <= STEPS; s++) {
+      const t = t0 + (t1 - t0) * s / STEPS, y = ys(edge(t, i));
+      s === 0 ? ctx.moveTo(xs(t), y) : ctx.lineTo(xs(t), y);
+    }
+    for (let s = STEPS; s >= 0; s--) {
+      const t = t0 + (t1 - t0) * s / STEPS;
+      ctx.lineTo(xs(t), ys(edge(t, i + 1)));
+    }
+    ctx.closePath();
+    ctx.globalAlpha = i === curBand ? 0.75 : 0.5;
+    ctx.fillStyle = BANDS[i].c;
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.font = '11px Inter, sans-serif'; ctx.fillStyle = '#8391ad'; ctx.strokeStyle = 'rgba(233,238,251,0.12)';
+  for (let ex = -6; ex <= 7; ex++) {
+    const lnp = ex * Math.LN10;
+    if (lnp < lo || lnp > hi) continue;
+    const y = ys(lnp);
+    ctx.beginPath(); ctx.moveTo(ML, y); ctx.lineTo(W - MR, y); ctx.stroke();
+    const v = Math.pow(10, ex);
+    ctx.fillText(v >= 1 ? v.toLocaleString('fr-FR') + ' $' : v.toFixed(-ex) + ' $', 4, y + 4);
+  }
+  const yr0 = new Date(t0).getFullYear() + 1, yr1 = new Date(t1).getFullYear();
+  const span = yr1 - yr0;
+  const yearStep = W < 640 ? (span > 8 ? 3 : 2) : (span > 10 ? 2 : 1);
+  for (let yr = yr0; yr <= yr1; yr += yearStep) {
+    ctx.fillText(String(yr), xs(Date.UTC(yr, 0, 1)) - 12, H - 8);
+  }
+  const nowX = xs(Date.now());
+  ctx.strokeStyle = 'rgba(233,238,251,0.25)'; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(nowX, MT); ctx.lineTo(nowX, H - MB); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  for (let i = 0; i < pts.length; i++) {
+    const x = xs(pts[i].t), y = ys(Math.log(pts[i].price));
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = '#f2f8ff'; ctx.lineWidth = 1.8;
+  ctx.shadowColor = 'rgba(62,198,255,0.8)'; ctx.shadowBlur = 6;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  const lp = pts[pts.length - 1];
+  ctx.beginPath(); ctx.arc(xs(lp.t), ys(Math.log(lp.price)), 4, 0, 7);
+  ctx.fillStyle = '#f2f8ff'; ctx.fill();
+  if (hoverPt) {
+    const hx = xs(hoverPt.t), hy = ys(Math.log(hoverPt.price));
+    ctx.strokeStyle = 'rgba(62,198,255,0.6)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(hx, MT); ctx.lineTo(hx, H - MB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(hx, hy, 5, 0, 7);
+    ctx.strokeStyle = '#3ec6ff'; ctx.lineWidth = 2; ctx.stroke();
+  }
+}
+
+/* ---------- survol ---------- */
+function showAt(clientX) {
+  const e = cache[current];
+  if (!view || !e) return;
+  const cv = $('chart'), tip = $('tooltip');
+  const rect = cv.getBoundingClientRect();
+  const t = view.t0 + (clientX - rect.left - view.ML) / (view.W - view.ML - view.MR) * (view.t1 - view.t0);
+  let best = 0, bd = Infinity;
+  for (let i = 0; i < e.pts.length; i++) { const d = Math.abs(e.pts[i].t - t); if (d < bd) { bd = d; best = i; } }
+  const pt = e.pts[best];
+  hoverPt = pt;
+  const band = e.model.bandOf(pt.price, pt.t);
+  const eur = eurRate ? pt.price / eurRate : null;
+  tip.innerHTML = '<strong>' + new Date(pt.t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) + '</strong><br>' +
+    fmtP(pt.price) + ' $' + (eur !== null ? ' · ' + fmtP(eur) + ' €' : '') +
+    '<br><span style="color:' + BANDS[band].c + '">■</span> <span style="color:var(--muted)">' + BANDS[band].label + '</span>';
+  tip.style.display = 'block';
+  const cx = cv.offsetLeft + view.xs(pt.t), cy = cv.offsetTop + view.ys(Math.log(pt.price));
+  tip.style.left = Math.min(cv.offsetLeft + view.W - 170, Math.max(cv.offsetLeft, cx + 14)) + 'px';
+  tip.style.top = Math.max(0, cy - 62) + 'px';
+  requestAnimationFrame(draw);
+}
+const hideTip = () => { hoverPt = null; $('tooltip').style.display = 'none'; draw(); };
+
+/* ---------- demarrage ---------- */
+(async function init() {
+  $('legend').innerHTML = [...BANDS].reverse()
+    .map(b => '<span><i style="background:' + b.c + '"></i>' + b.label + '</span>').join('');
+  fetch('https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT')
+    .then(r => r.ok ? r.json() : null).then(j => { if (j) eurRate = parseFloat(j.price); }).catch(() => {});
+
+  const cv = $('chart');
+  cv.addEventListener('mousemove', ev => showAt(ev.clientX));
+  cv.addEventListener('mouseleave', hideTip);
+  cv.addEventListener('touchstart', ev => showAt(ev.touches[0].clientX), { passive: true });
+  cv.addEventListener('touchmove', ev => showAt(ev.touches[0].clientX), { passive: true });
+  cv.addEventListener('touchend', () => setTimeout(hideTip, 1500));
+  window.addEventListener('resize', draw);
+
+  await buildCoins();
+  renderTabs();
+  await selectCoin(COINS[0].short);
+
+  // le classement peut changer : on resynchronise avec la page Signaux
+  setInterval(async () => {
+    const before = COINS.map(c => c.short).join(',');
+    await buildCoins();
+    if (COINS.map(c => c.short).join(',') !== before) {
+      if (!COINS.some(c => c.short === current)) {
+        await selectCoin(COINS[0].short);       // la crypto affichee est sortie du top 10
+      } else {
+        renderTabs();
+      }
+    }
+  }, 15 * 60 * 1000);
+})();
+</script>
+</body>
+</html>
