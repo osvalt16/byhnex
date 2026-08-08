@@ -1,19 +1,20 @@
-# Contexte de developpement - Crypto Suivi & Bot Virtuel
+# Contexte de developpement - Byhnex (suivi crypto & signaux)
 
 Ce fichier sert de reference rapide pour le projet. Il doit rester simple, concret et a jour.
 
 ## Objectif du projet
 
-Un site statique de suivi crypto en temps reel, sans serveur et sans cout :
-un dashboard de prix avec suivi de portefeuille, et un bot de trading 100 % virtuel
-qui teste une strategie automatiquement (paper trading).
+Byhnex : un site statique de suivi crypto en temps reel, sans serveur et sans cout.
+Dashboard de prix avec suivi de portefeuille, page de signaux RSI en direct,
+Rainbow Chart Dogecoin, saisonnalite Bitcoin, plus un robot GitHub Actions qui
+envoie des notifications push quand une crypto entre en zone d'achat ou de vente.
 
-Priorite actuelle : valider la strategie du bot en virtuel sur plusieurs semaines
-avant toute discussion d'argent reel.
+Le bot de trading virtuel (paper trading) a ete retire le 08/08/2026 :
+la page conserve uniquement la surveillance de marche et les signaux.
 
 ## Regles absolues (non negociables)
 
-- Aucun ordre reel, jamais : le bot ne touche que de l'argent virtuel.
+- Aucun ordre reel, jamais : le site n'execute aucune transaction.
 - Aucune cle API d'exchange dans le code, meme en test.
   Exception decidee le 28/07/2026 : une cle Coinbase en LECTURE SEULE peut etre
   stockee dans les secrets GitHub Actions (jamais dans le code, jamais publiee).
@@ -46,27 +47,20 @@ avant toute discussion d'argent reel.
 
 ## Structure actuelle
 
+- `index.html` : accueil Byhnex, cartes vers les quatre outils.
 - `crypto-dashboard.html` : suivi de prix top 20 (API CoinGecko, refresh 60 s) +
-  portefeuille personnel (quantites, prix d'achat, P&L). Stockage : `crypto-portfolio-v1`.
-- `crypto-bot-virtuel.html` : bot paper trading. Prix temps reel via WebSocket Binance
-  (miniTicker), strategie RSI 14 sur bougies 15 min (achat < 30 avec 10 % du cash,
-  vente > 70), frais virtuels de 0,60 % par ordre (comme Coinbase Advanced),
-  rattrapage des bougies manquees a l'ouverture. Univers : top 10 par capitalisation
-  hors stablecoins, filtre aux cryptos tradables sur Coinbase, reclasse toutes les 15 min.
-  Colonne tendance via moyennes 50/200 (bougies 15 min) + barre marche Bitcoin (50/200 jours).
-  Les bougies ne sont retelechargees qu'apres chaque cloture 15 min.
-  Stockage : `crypto-bot-v3` (+ `crypto-bot-alerts` pour l'etat des alertes).
-- `scripts/build-data.mjs` + `.github/workflows/signaux.yml` : toutes les 15 min,
-  GitHub Actions recalcule les signaux (meme logique que le bot) et publie
-  `data.json` + `widget.txt` sur la branche `data` (pour le widget KWGT du telephone),
-  et envoie une notification push ntfy a chaque entree en zone achat/vente
-  (canal secret dans le secret Actions `NTFY_TOPIC`).
-- `rainbow-doge.html` : Rainbow Chart du Dogecoin. Historique DOGE/USD depuis 2014
-  (CoinCodex, CORS ouvert) + prix live Binance, regression log calculee dans le
-  navigateur, 9 bandes arc-en-ciel dessinees en canvas, prolongees 18 mois.
-- `saisonnalite-btc.html` : tableau des rendements mensuels BTC (annees x mois)
-  depuis 2014, heatmap verte/rouge, stats par mois, mois en cours au prix live
-  Binance (refresh 60 s). Donnees CoinCodex.
+  quantites personnelles. Stockage : `crypto-portfolio-v1`.
+- `signaux-crypto.html` : top 10 tradable sur Coinbase, prix temps reel WebSocket
+  Binance, RSI 14 sur bougies 15 min, tendance 50/200, zones d'achat (<30) et de
+  vente (>70), alertes navigateur. Aucune simulation de trading.
+- `rainbow-doge.html` : Rainbow Chart Dogecoin depuis 2014 (CoinCodex) + prix live
+  Binance, regression log calculee dans le navigateur, infobulle $/EUR au survol.
+- `saisonnalite-btc.html` : rendements mensuels BTC depuis 2014 en heatmap,
+  mois en cours au prix live.
+- `scripts/build-data.mjs` + `.github/workflows/robot-signaux.yml` : toutes les 5 min,
+  GitHub Actions recalcule les signaux et publie `data.json`, `widget*.txt` et les
+  colonnes sur la branche `data` (widget KWGT), et envoie une notification ntfy a
+  chaque entree en zone (canal secret dans le secret Actions `NTFY_TOPIC`).
 - `CONTEXT.md` : ce fichier.
 
 ## Regles APIs et donnees

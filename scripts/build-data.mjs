@@ -1,7 +1,7 @@
 // Calcule les signaux du site (RSI 14 / bougies 15 min, tendance 50/200)
 // pour le widget mobile et les notifications ntfy.
 // Execute par GitHub Actions toutes les 15 min — aucune cle, aucune donnee privee.
-// La logique replique exactement celle de crypto-bot-virtuel.html.
+// La logique replique exactement celle de signaux-crypto.html.
 'use strict';
 
 import { createPrivateKey, createSign, randomBytes, sign as rawSign } from 'node:crypto';
@@ -61,7 +61,7 @@ const STABLES = new Set(['usdt','usdc','usds','usde','dai','fdusd','tusd','pyusd
 const RSI_PERIOD = 14, BUY_BELOW = 30, SELL_ABOVE = 70, INTERVAL = '15m';
 
 async function getJson(url) {
-  const res = await fetch(url, { headers: { 'User-Agent': 'michmich-signaux' } });
+  const res = await fetch(url, { headers: { 'User-Agent': 'byhnex-signaux' } });
   if (!res.ok) throw new Error(`HTTP ${res.status} ${url}`);
   return res.json();
 }
@@ -213,7 +213,7 @@ async function main() {
                 + ' Info, pas un conseil financier.',
               priority: 4,
               tags: [isBuy ? 'green_circle' : 'red_circle'],
-              click: 'https://osvalt16.github.io/michmich/crypto-bot-virtuel.html',
+              click: 'https://osvalt16.github.io/michmich/signaux-crypto.html',
             }),
           });
           console.log(r.ok ? 'notif envoyee:' : 'ECHEC notif HTTP ' + r.status + ':', c.short, c.zone);
