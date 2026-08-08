@@ -369,18 +369,21 @@ function afficher(r, coin) {
   $('trades').innerHTML = '<thead><tr><th>Date</th><th>Type</th><th>Prix</th><th>RSI</th><th>Résultat</th></tr></thead><tbody>' + rows + '</tbody>';
 
   last = r;
+  $('out').style.display = '';   // doit etre visible AVANT le dessin, sinon largeur nulle
   dessiner();
-  $('out').style.display = '';
 }
 
 function dessiner() {
   if (!last) return;
   const cv = $('chart'), eq = last.equity;
-  const W = cv.parentElement.clientWidth - 36, H = Math.max(280, Math.min(440, Math.round(W * 0.42)));
+  if (!eq || eq.length < 2) return;
+  const W = cv.clientWidth;                    // largeur reellement occupee (width:100%)
+  if (!W || W < 50) { requestAnimationFrame(dessiner); return; }   // pas encore mis en page
+  const H = Math.max(280, Math.min(440, Math.round(W * 0.42)));
   const dpr = window.devicePixelRatio || 1;
-  cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + 'px';
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
   const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
-  const ML = 62, MR = 10, MT = 10, MB = 24;
+  const ML = 66, MR = 12, MT = 10, MB = 24;
   let lo = Infinity, hi = -Infinity;
   for (const e of eq) { for (const v of [e.v, e.h]) { if (v > 0) { const l = Math.log(v); if (l < lo) lo = l; if (l > hi) hi = l; } } }
   lo -= 0.05; hi += 0.05;
@@ -389,12 +392,19 @@ function dessiner() {
   const ys = v => MT + (hi - Math.log(Math.max(v, 1e-9))) / (hi - lo) * (H - MT - MB);
   ctx.clearRect(0, 0, W, H);
   ctx.font = '11px Inter, sans-serif'; ctx.fillStyle = '#8391ad'; ctx.strokeStyle = 'rgba(233,238,251,0.1)';
-  for (let e = -2; e <= 9; e++) {
-    const v = Math.pow(10, e); const l = Math.log(v);
+  const pas = (hi - lo) < Math.LN10 * 1.5 ? [1, 2, 5] : [1];   // plage courte : graduations intermediaires
+  const reperes = [];
+  for (let e = -2; e <= 9; e++) for (const m of pas) reperes.push(m * Math.pow(10, e));
+  for (const v of reperes.sort((a, b) => a - b)) {
+    const l = Math.log(v);
     if (l < lo || l > hi) continue;
     const y = ys(v);
     ctx.beginPath(); ctx.moveTo(ML, y); ctx.lineTo(W - MR, y); ctx.stroke();
-    ctx.fillText(Devises.fmtUsd(v, 0), 4, y + 4);
+    const cvv = Devises.convUsd(v);
+    const lab = cvv >= 1e6 ? (cvv / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' M'
+      : cvv >= 1000 ? (cvv / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' k'
+      : cvv.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+    ctx.fillText(lab + ' ' + Devises.symbol(), 4, y + 4);
   }
   const yr0 = new Date(t0).getFullYear(), yr1 = new Date(t1).getFullYear();
   for (let yr = yr0 + 1; yr <= yr1; yr++) {
