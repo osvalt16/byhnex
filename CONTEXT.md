@@ -58,6 +58,9 @@ la page conserve uniquement la surveillance de marche et les signaux.
   regression log et 9 bandes calculees dans le navigateur pour chaque crypto,
   onglets synchronises avec le top 10 (resynchronisation toutes les 15 min),
   infobulle $/EUR au survol. Avertissement si moins de 4 ans d'historique.
+- `positionnement.html` : donnees de contrats perpetuels Binance Futures pour le
+  meme top 10 : funding rate (8 h et annualise), open interest et sa variation 24 h,
+  ratio long/short des comptes, et lecture croisee prix/OI. Refresh 5 min.
 - `saisonnalite-btc.html` : rendements mensuels BTC depuis 2014 en heatmap,
   mois en cours au prix live.
 - `scripts/build-data.mjs` + `.github/workflows/robot-signaux.yml` : toutes les 5 min,

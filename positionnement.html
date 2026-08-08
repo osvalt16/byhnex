@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Positionnement du marché — Byhnex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #04060d; --card: rgba(12,18,36,0.66); --border: rgba(96,140,255,0.14);
+    --border-strong: rgba(62,198,255,0.4);
+    --text: #e9eefb; --muted: #8391ad;
+    --green: #2be3a4; --red: #ff5f76; --accent: #3ec6ff; --violet: #9a6bff; --gold: #e6b95c;
+    --glow-cyan: rgba(62,198,255,0.3); --glow-violet: rgba(154,107,255,0.25);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    padding: 26px 20px 60px; position: relative;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(640px 420px at 15% -5%, var(--glow-cyan), transparent 65%),
+      radial-gradient(700px 480px at 90% 105%, var(--glow-violet), transparent 65%);
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(99,140,255,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,140,255,0.045) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 75%);
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand img { width: 46px; height: 46px; border-radius: 12px; filter: drop-shadow(0 0 14px var(--glow-cyan)); }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;
+    background: linear-gradient(94deg, #f2f8ff 5%, var(--accent) 55%, var(--violet));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  a.back { color: var(--muted); font-size: 13px; text-decoration: none; }
+  a.back:hover { color: var(--accent); }
+  .panel {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 16px 18px; margin-bottom: 16px; position: relative; overflow: hidden;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  }
+  .panel::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(62,198,255,0.5), transparent);
+  }
+  #status-bar { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; }
+  #status-bar strong { color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 17px; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 880px; font-size: 12.5px; }
+  th, td { padding: 7px 6px; text-align: right; border-bottom: 1px solid rgba(96,140,255,0.08); white-space: nowrap; }
+  th { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; font-weight: 600; position: sticky; left: 0; background: #0b1020; }
+  tbody tr:hover td { filter: brightness(1.25); }
+  tr.stats td { border-top: 1px solid var(--border); font-weight: 600; }
+  td.cur { outline: 1px dashed rgba(62,198,255,0.7); outline-offset: -2px; font-style: italic; }
+  .warn {
+    background: rgba(230,185,92,0.06); border: 1px solid rgba(230,185,92,0.3); border-radius: 14px;
+    padding: 13px 18px; font-size: 12.5px; color: var(--gold); margin-bottom: 16px; line-height: 1.6;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  }
+  .note { color: var(--muted); font-size: 12px; line-height: 1.7; }
+  .error { display: none; background: rgba(255,95,118,0.08); border: 1px solid rgba(255,95,118,0.4); color: var(--red); padding: 13px 16px; border-radius: 12px; margin-bottom: 16px; font-size: 13px; }
+  .swipe-hint { display: none; }
+  @media (max-width: 700px) {
+    body { padding: 16px 10px 40px; }
+    h1 { font-size: 18px; }
+    .brand img { width: 38px; height: 38px; }
+    th, td { padding: 6px 5px; font-size: 11px; }
+    table { min-width: 700px; }
+    .swipe-hint { display: block; color: var(--accent); font-size: 12px; margin-bottom: 8px; }
+    #status-bar { font-size: 13px; }
+    #status-bar strong { font-size: 15px; }
+  }
+  .lecture { font-size: 11.5px; line-height: 1.45; }
+  .fund-chip { padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .bar { height: 6px; border-radius: 3px; background: rgba(255,95,118,0.35); overflow: hidden; min-width: 60px; }
+  .bar > i { display: block; height: 100%; background: var(--green); }
+  details.help { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; }
+  details.help summary { cursor: pointer; color: var(--accent); font-size: 13.5px; font-weight: 600; padding: 4px 0; }
+  details.help .body { color: var(--muted); font-size: 13px; line-height: 1.75; padding-top: 10px; }
+  details.help .body strong { color: var(--text); }
+  details.help .body li { margin-bottom: 7px; }
+  details.help .body ul { padding-left: 20px; margin: 8px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand">
+      <img src="logo.png" alt="">
+      <h1>⚖️ Positionnement du marché</h1>
+    </div>
+    <a class="back" href="index.html">← Accueil</a>
+  </header>
+
+  <div class="error" id="error"></div>
+
+  <div class="panel"><div id="status-bar">⏳ Chargement des données de contrats à terme…</div></div>
+
+  <div class="panel">
+    <div class="swipe-hint">👉 Fais glisser le tableau vers la gauche pour tout voir</div>
+    <div class="table-wrap" id="table-wrap"></div>
+  </div>
+
+  <div class="warn">
+    ⚠️ Ces données décrivent le <strong>positionnement des traders à effet de levier</strong>, pas la valeur
+    d'une crypto. Un marché encombré peut le rester longtemps : ce sont des indicateurs de fragilité,
+    jamais des signaux d'achat ou de vente. Ceci n'est pas un conseil financier.
+  </div>
+
+  <div class="panel">
+    <details class="help" open>
+      <summary>📖 Comment lisent les professionnels</summary>
+      <div class="body">
+        <p><strong>Le funding rate</strong> est le loyer payé toutes les 8 heures entre acheteurs et vendeurs
+        à effet de levier pour maintenir le prix du contrat perpétuel collé au prix réel. Quand il est
+        <strong>positif</strong>, ce sont les acheteurs qui paient : le marché est majoritairement à l'achat.
+        Quand il est <strong>négatif</strong>, les vendeurs paient. Un funding annualisé très élevé
+        (au-dessus de 30 %) signale des acheteurs encombrés et une vulnérabilité aux liquidations en cascade.
+        À l'inverse, un funding nettement négatif signale des vendeurs encombrés, terrain classique
+        d'un <em>short squeeze</em>.</p>
+
+        <p><strong>L'open interest</strong> est le montant total des positions ouvertes. Croisé avec le prix,
+        il raconte ce qui se passe vraiment :</p>
+        <ul>
+          <li><strong>Prix ↗ et OI ↗</strong> — de l'argent frais entre à l'achat. Tendance réelle, mais alimentée par le levier.</li>
+          <li><strong>Prix ↗ et OI ↘</strong> — des vendeurs se rachètent. La hausse vient de couvertures, pas de convictions nouvelles.</li>
+          <li><strong>Prix ↘ et OI ↗</strong> — de nouveaux vendeurs s'installent. Pression baissière assumée.</li>
+          <li><strong>Prix ↘ et OI ↘</strong> — des positions se ferment. Purge du levier, souvent après liquidations.</li>
+        </ul>
+
+        <p><strong>Le ratio long/short</strong> compte les comptes positionnés à l'achat contre ceux à la vente.
+        Beaucoup s'en servent à contre-courant : quand une écrasante majorité est du même côté,
+        il reste peu d'acheteurs pour pousser encore plus haut.</p>
+
+        <p style="color:var(--gold)">Le réflexe de fond : ces mesures disent <strong>où est le risque</strong>,
+        pas où va le prix. Elles servent à éviter d'entrer au moment le plus fragile, pas à prédire.</p>
+      </div>
+    </details>
+  </div>
+
+  <p class="note">
+    📡 Source : contrats perpétuels USDT de Binance Futures (funding, open interest, ratio long/short des comptes).<br>
+    🔄 Actualisation toutes les 5 minutes. Le funding est réglé toutes les 8 heures ; l'open interest est publié chaque heure.<br>
+    📐 Funding annualisé = taux 8 h × 3 × 365. Variations d'open interest et de prix sur 24 heures glissantes.
+  </p>
+</div>
+
+<script>
+'use strict';
+const STABLES = new Set(['usdt','usdc','usds','usde','dai','fdusd','tusd','pyusd','busd','usdp','gusd','eurc','eurt','usdtb','susds','usd1','bsc-usd','steth','wsteth','weeth','wbtc','cbbtc','weth','reth','wbeth']);
+const FALLBACK = [
+  { short: 'BTC', name: 'Bitcoin' }, { short: 'ETH', name: 'Ethereum' }, { short: 'SOL', name: 'Solana' },
+  { short: 'XRP', name: 'XRP' }, { short: 'DOGE', name: 'Dogecoin' },
+];
+let COINS = [];
+const $ = id => document.getElementById(id);
+
+async function buildCoins() {
+  try {
+    const [infoRes, topRes, cbRes] = await Promise.all([
+      fetch('https://api.binance.com/api/v3/exchangeInfo'),
+      fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=30&page=1'),
+      fetch('https://api.exchange.coinbase.com/products').catch(() => null),
+    ]);
+    if (!infoRes.ok || !topRes.ok) throw new Error('HTTP');
+    const info = await infoRes.json(), top = await topRes.json();
+    let cbSet = null;
+    if (cbRes && cbRes.ok) {
+      const prods = await cbRes.json();
+      cbSet = new Set(prods.filter(x => (x.quote_currency === 'USD' || x.quote_currency === 'USDC') && x.status === 'online' && !x.trading_disabled).map(x => x.base_currency));
+    }
+    const pairs = new Set(info.symbols.filter(s => s.status === 'TRADING').map(s => s.symbol));
+    const list = [];
+    for (const c of top) {
+      if (STABLES.has(c.symbol.toLowerCase())) continue;
+      const short = c.symbol.toUpperCase();
+      if (cbSet && !cbSet.has(short)) continue;
+      if (!['EUR', 'USDC', 'USDT'].some(q => pairs.has(short + q))) continue;
+      if (!list.some(x => x.short === short)) list.push({ short, name: c.name });
+      if (list.length === 10) break;
+    }
+    COINS = list.length >= 5 ? list : FALLBACK;
+  } catch (e) { console.warn(e); if (!COINS.length) COINS = FALLBACK; }
+}
+
+const fmtUsd = v => v >= 1e9 ? (v / 1e9).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' Md$'
+  : v >= 1e6 ? (v / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' M$'
+  : Math.round(v).toLocaleString('fr-FR') + ' $';
+const fmtPx = v => v >= 1000 ? v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) : v.toLocaleString('fr-FR', { maximumFractionDigits: v < 1 ? 4 : 2 });
+const pct = (v, d) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(d ?? 1) + ' %';
+
+function fundingChip(annual) {
+  let bg, fg, txt;
+  if (annual > 30) { bg = 'rgba(255,95,118,0.14)'; fg = 'var(--red)'; txt = 'acheteurs encombrés'; }
+  else if (annual > 10) { bg = 'rgba(230,185,92,0.12)'; fg = 'var(--gold)'; txt = 'acheteurs dominants'; }
+  else if (annual < -10) { bg = 'rgba(43,227,164,0.14)'; fg = 'var(--green)'; txt = 'vendeurs encombrés'; }
+  else { bg = 'rgba(131,145,173,0.1)'; fg = 'var(--muted)'; txt = 'équilibré'; }
+  return { html: '<span class="fund-chip" style="background:' + bg + ';color:' + fg + '">' + pct(annual) + '/an</span>', txt, fg };
+}
+
+function lecture(dPrice, dOi) {
+  if (dPrice === null || dOi === null) return '<span style="color:var(--muted)">—</span>';
+  const seuil = 1.0;
+  if (Math.abs(dPrice) < 0.5 && Math.abs(dOi) < seuil) return '<span style="color:var(--muted)">calme</span>';
+  if (dPrice >= 0 && dOi >= 0) return '<span class="up">argent frais à l\'achat</span><br><span style="color:var(--muted)">hausse alimentée par le levier</span>';
+  if (dPrice >= 0 && dOi < 0) return '<span style="color:var(--gold)">rachats de vendeurs</span><br><span style="color:var(--muted)">hausse peu soutenue</span>';
+  if (dPrice < 0 && dOi >= 0) return '<span class="down">nouveaux vendeurs</span><br><span style="color:var(--muted)">pression baissière assumée</span>';
+  return '<span style="color:var(--gold)">purge du levier</span><br><span style="color:var(--muted)">positions fermées</span>';
+}
+
+async function refresh() {
+  try {
+    const [prem, tick] = await Promise.all([
+      fetch('https://fapi.binance.com/fapi/v1/premiumIndex').then(r => r.json()),
+      fetch('https://fapi.binance.com/fapi/v1/ticker/24hr').then(r => r.json()),
+    ]);
+    const pMap = Object.fromEntries(prem.map(x => [x.symbol, x]));
+    const tMap = Object.fromEntries(tick.map(x => [x.symbol, x]));
+
+    const rows = await Promise.all(COINS.map(async c => {
+      const sym = c.short + 'USDT';
+      if (!pMap[sym]) return { c, absent: true };
+      let oiNow = null, oiChg = null, ls = null;
+      try {
+        const h = await fetch('https://fapi.binance.com/futures/data/openInterestHist?symbol=' + sym + '&period=1h&limit=25').then(r => r.json());
+        if (Array.isArray(h) && h.length) {
+          oiNow = parseFloat(h[h.length - 1].sumOpenInterestValue);
+          const old = parseFloat(h[0].sumOpenInterestValue);
+          if (old > 0) oiChg = (oiNow / old - 1) * 100;
+        }
+      } catch (e) {}
+      try {
+        const r = await fetch('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=' + sym + '&period=1h&limit=1').then(r => r.json());
+        if (Array.isArray(r) && r.length) ls = { long: parseFloat(r[0].longAccount), ratio: parseFloat(r[0].longShortRatio) };
+      } catch (e) {}
+      const f = parseFloat(pMap[sym].lastFundingRate);
+      const t = tMap[sym];
+      return {
+        c, funding8h: f * 100, annual: f * 3 * 365 * 100,
+        price: parseFloat(pMap[sym].markPrice),
+        dPrice: t ? parseFloat(t.priceChangePercent) : null,
+        oi: oiNow, oiChg, ls,
+        nextFunding: parseFloat(pMap[sym].nextFundingTime),
+      };
+    }));
+
+    let html = '<table><thead><tr><th>Crypto</th><th>Prix</th><th>24h</th><th>Funding 8h</th><th>Funding annualisé</th>' +
+      '<th class="hide-mobile">Open interest</th><th class="hide-mobile">OI 24h</th><th class="hide-mobile">Comptes acheteurs</th><th class="hide-mobile">Lecture</th></tr></thead><tbody>';
+    let totalOi = 0, nb = 0, sumAnnual = 0;
+    for (const r of rows) {
+      if (r.absent) {
+        html += '<tr><td><strong>' + r.c.short + '</strong></td><td colspan="8" style="color:var(--muted)">pas de contrat perpétuel</td></tr>';
+        continue;
+      }
+      nb++; sumAnnual += r.annual; if (r.oi) totalOi += r.oi;
+      const fc = fundingChip(r.annual);
+      const lsPct = r.ls ? r.ls.long * 100 : null;
+      html += '<tr>' +
+        '<td><strong>' + r.c.name + '</strong> <span style="color:var(--muted);font-size:11px">' + r.c.short + '</span></td>' +
+        '<td>' + fmtPx(r.price) + ' $</td>' +
+        '<td class="' + (r.dPrice >= 0 ? 'up' : 'down') + '">' + (r.dPrice === null ? '—' : pct(r.dPrice, 2)) + '</td>' +
+        '<td style="color:' + (r.funding8h >= 0 ? 'var(--muted)' : 'var(--green)') + '">' + r.funding8h.toFixed(4) + ' %</td>' +
+        '<td>' + fc.html + '<br><span style="font-size:10.5px;color:' + fc.fg + '">' + fc.txt + '</span></td>' +
+        '<td class="hide-mobile">' + (r.oi ? fmtUsd(r.oi) : '—') + '</td>' +
+        '<td class="hide-mobile ' + (r.oiChg >= 0 ? 'up' : 'down') + '">' + (r.oiChg === null ? '—' : pct(r.oiChg)) + '</td>' +
+        '<td class="hide-mobile">' + (lsPct === null ? '—' :
+          lsPct.toFixed(0) + ' %<div class="bar"><i style="width:' + lsPct.toFixed(0) + '%"></i></div>') + '</td>' +
+        '<td class="hide-mobile lecture">' + lecture(r.dPrice, r.oiChg) + '</td>' +
+        '</tr>';
+    }
+    html += '</tbody></table>';
+    $('table-wrap').innerHTML = html;
+    $('error').style.display = 'none';
+
+    const moy = nb ? sumAnnual / nb : 0;
+    const next = rows.find(r => r.nextFunding);
+    const mins = next ? Math.max(0, Math.round((next.nextFunding - Date.now()) / 60000)) : null;
+    const regime = moy > 25 ? '<span class="down">marché majoritairement à l\'achat avec levier</span>'
+      : moy < -5 ? '<span class="up">marché majoritairement à la vente</span>'
+      : '<span style="color:var(--muted)">positionnement globalement équilibré</span>';
+    $('status-bar').innerHTML =
+      '<span>⚖️ Funding moyen du top 10 : <strong>' + pct(moy) + '/an</strong></span>' +
+      '<span>' + regime + '</span>' +
+      '<span>Open interest cumulé : <strong>' + fmtUsd(totalOi) + '</strong></span>' +
+      (mins !== null ? '<span style="font-size:12px">prochain règlement dans ' + Math.floor(mins / 60) + ' h ' + (mins % 60) + ' min</span>' : '') +
+      '<span style="font-size:12px">maj ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + '</span>';
+  } catch (e) {
+    $('error').style.display = 'block';
+    $('error').textContent = 'Impossible de charger les données Binance Futures (' + e.message + '). Nouvelle tentative dans 5 minutes.';
+  }
+}
+
+(async function init() {
+  await buildCoins();
+  await refresh();
+  setInterval(refresh, 300000);
+  setInterval(buildCoins, 15 * 60 * 1000);
+})();
+</script>
+</body>
+</html>
