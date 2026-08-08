@@ -92,6 +92,14 @@
     font-family: 'Inter', sans-serif; transition: border-color 0.2s, box-shadow 0.2s;
   }
   input.qty:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 14px -6px var(--accent); }
+  select.cur {
+    background: rgba(4,6,13,0.7); border: 1px solid var(--border); color: var(--accent);
+    border-radius: 7px; padding: 3px 6px; font-family: 'Inter', sans-serif; font-size: 11px;
+    font-weight: 600; cursor: pointer; margin-left: 6px; text-transform: none; letter-spacing: 0;
+    vertical-align: middle; max-width: 92px;
+  }
+  select.cur:focus { outline: none; border-color: var(--accent); }
+  select.cur option { background: #0b1020; color: var(--text); }
   .error {
     background: rgba(255,95,118,0.08); border: 1px solid rgba(255,95,118,0.4); color: var(--red);
     padding: 13px 16px; border-radius: 12px; margin-bottom: 16px; display: none; font-size: 13px;
@@ -138,7 +146,7 @@
       <tr>
         <th>#</th>
         <th>Crypto</th>
-        <th>Prix</th>
+        <th>Prix<select class="cur" id="cur" title="Changer de devise"></select></th>
         <th>24h</th>
         <th class="hide-mobile">7j</th>
         <th class="hide-mobile">Cap. marché</th>
@@ -159,21 +167,19 @@
   </p>
 </div>
 
+<script src="devises.js"></script>
 <script>
 const API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=20&page=1&price_change_percentage=24h,7d';
 const LS_KEY = 'crypto-portfolio-v1';
 let portfolio = {};
 try { portfolio = JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch(e) { portfolio = {}; }
 
-const fmtEur = (n, digits) => {
-  if (n === null || n === undefined || isNaN(n)) return '—';
-  const d = digits !== undefined ? digits : (n >= 1 ? 2 : 6);
-  return n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: d, maximumFractionDigits: d });
-};
+const fmtEur = (n, digits) => Devises.fmt(n, digits !== undefined ? digits : (n >= 1 ? 2 : 6));
 const fmtBig = n => {
-  if (n >= 1e12) return (n/1e12).toLocaleString('fr-FR',{maximumFractionDigits:2}) + ' T€';
-  if (n >= 1e9) return (n/1e9).toLocaleString('fr-FR',{maximumFractionDigits:2}) + ' Md€';
-  if (n >= 1e6) return (n/1e6).toLocaleString('fr-FR',{maximumFractionDigits:2}) + ' M€';
+  const v = Devises.conv(n), sym = Devises.symbol();
+  if (v >= 1e12) return (v/1e12).toLocaleString('fr-FR',{maximumFractionDigits:2}) + ' T ' + sym;
+  if (v >= 1e9) return (v/1e9).toLocaleString('fr-FR',{maximumFractionDigits:2}) + ' Md ' + sym;
+  if (v >= 1e6) return (v/1e6).toLocaleString('fr-FR',{maximumFractionDigits:2}) + ' M ' + sym;
   return fmtEur(n, 0);
 };
 const pct = n => {
@@ -253,7 +259,7 @@ async function refresh() {
   }
 }
 
-refresh();
+Devises.init('#cur', () => { if (lastData.length) render(lastData); }).then(refresh);
 setInterval(refresh, 60000);
 </script>
 </body>

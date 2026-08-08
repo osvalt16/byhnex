@@ -101,6 +101,13 @@
     box-shadow: 0 0 18px -7px var(--accent);
   }
   .coin-tab .band-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: middle; }
+  select.cur {
+    background: rgba(4,6,13,0.7); border: 1px solid var(--border); color: var(--accent);
+    border-radius: 7px; padding: 3px 7px; font-family: 'Inter', sans-serif; font-size: 11.5px;
+    font-weight: 600; cursor: pointer; text-transform: none; letter-spacing: 0; vertical-align: middle;
+  }
+  select.cur:focus { outline: none; border-color: var(--accent); }
+  select.cur option { background: #0b1020; color: var(--text); }
   .hist-note { color: var(--gold); font-size: 11.5px; }
   @media (max-width: 700px) { .coin-tab { padding: 7px 12px; font-size: 12px; } }
 </style>
@@ -119,6 +126,7 @@
 
   <div class="panel">
     <h2 style="margin-bottom:10px">Crypto suivie — top 10 par capitalisation</h2>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><select class="cur" id="cur" title="Changer de devise"></select></div>
     <div class="coin-tabs" id="tabs"><span style="color:var(--muted);font-size:13px">⏳ Chargement du classement…</span></div>
   </div>
 
@@ -137,7 +145,7 @@
   </div>
 
   <p class="note">
-    📈 Historique quotidien en dollars depuis les origines de chaque crypto (source CoinCodex) + prix en direct via WebSocket Binance.<br>
+    📈 Historique quotidien depuis les origines de chaque crypto (source CoinCodex) + prix en direct via WebSocket Binance.<br>
     📐 Méthode : régression ln(prix) = a + b·ln(jours depuis le premier cours connu), puis 9 bandes réparties
     uniformément en échelle logarithmique autour de la tendance, prolongées 18 mois.<br>
     🔄 Le classement se rafraîchit toutes les 15 minutes : si une crypto entre dans le top 10, son onglet apparaît ici automatiquement.
@@ -147,6 +155,7 @@
   </p>
 </div>
 
+<script src="devises.js"></script>
 <script>
 'use strict';
 const BANDS = [
@@ -167,7 +176,7 @@ const FALLBACK = [
   { short: 'DOGE', name: 'Dogecoin', wsSym: 'DOGEUSDT', quote: 'USDT' },
 ];
 
-let COINS = [], current = null, ws = null, eurRate = null;
+let COINS = [], current = null, ws = null;
 let view = null, hoverPt = null;
 const cache = {};   // short -> { pts, model }
 const $ = id => document.getElementById(id);
@@ -268,20 +277,22 @@ function buildModel(pts) {
 }
 
 /* ---------- affichage ---------- */
-const fmtP = v => v >= 1000 ? v.toLocaleString('fr-FR', { maximumFractionDigits: 0 })
-  : v >= 0.001 ? v.toLocaleString('fr-FR', { maximumFractionDigits: v < 0.01 ? 6 : 4 })
-  : v.toPrecision(3);
+const fmtP = usd => {
+  const v = Devises.convUsd(usd);
+  return (v >= 1000 ? v.toLocaleString('fr-FR', { maximumFractionDigits: 0 })
+    : v >= 0.001 ? v.toLocaleString('fr-FR', { maximumFractionDigits: v < 0.01 ? 6 : 4 })
+    : v.toPrecision(3)) + ' ' + Devises.symbol();
+};
 
 function setStatus(coin, price, live) {
   const e = cache[coin.short];
   if (!e) return;
   const band = e.model.bandOf(price, Date.now());
   e.model.curBand = band;
-  const eur = eurRate ? price / eurRate : null;
   $('status-bar').innerHTML =
     '<span><strong style="color:var(--text)">' + coin.name + '</strong> ' +
       (live ? '<span style="color:var(--green);font-size:11px">● EN DIRECT</span>' : '') + '</span>' +
-    '<span><strong>' + fmtP(price) + ' $</strong>' + (eur !== null ? ' <span style="font-size:12px">· ' + fmtP(eur) + ' €</span>' : '') + '</span>' +
+    '<span><strong>' + fmtP(price) + '</strong></span>' +
     '<span>Bande : <span class="band-chip" style="background:' + BANDS[band].c + '">' + BANDS[band].label + '</span></span>' +
     '<span style="font-size:12px">' + e.pts.length + ' points · ' + e.model.years.toFixed(1) + ' ans d\'historique' +
       (e.model.years < 4 ? ' <span class="hist-note">⚠️ court : modèle peu fiable</span>' : '') +
@@ -325,7 +336,7 @@ function connectWS(coin) {
     if (current !== coin.short) return;
     let price = parseFloat(JSON.parse(ev.data).c);
     if (!price) return;
-    if (coin.quote === 'EUR' && eurRate) price *= eurRate;   // ramene en dollars
+    if (coin.quote === 'EUR') price *= Devises.usdPerEur;   // ramene en dollars
     const e = cache[coin.short];
     if (!e) return;
     e.pts[e.pts.length - 1] = { t: Date.now(), price };
@@ -385,7 +396,8 @@ function draw() {
     const y = ys(lnp);
     ctx.beginPath(); ctx.moveTo(ML, y); ctx.lineTo(W - MR, y); ctx.stroke();
     const v = Math.pow(10, ex);
-    ctx.fillText(v >= 1 ? v.toLocaleString('fr-FR') + ' $' : v.toFixed(-ex) + ' $', 4, y + 4);
+    const cv2 = Devises.convUsd(v);
+    ctx.fillText((cv2 >= 1 ? cv2.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) : cv2.toPrecision(2)) + ' ' + Devises.symbol(), 4, y + 4);
   }
   const yr0 = new Date(t0).getFullYear() + 1, yr1 = new Date(t1).getFullYear();
   const span = yr1 - yr0;
@@ -431,9 +443,8 @@ function showAt(clientX) {
   const pt = e.pts[best];
   hoverPt = pt;
   const band = e.model.bandOf(pt.price, pt.t);
-  const eur = eurRate ? pt.price / eurRate : null;
   tip.innerHTML = '<strong>' + new Date(pt.t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) + '</strong><br>' +
-    fmtP(pt.price) + ' $' + (eur !== null ? ' · ' + fmtP(eur) + ' €' : '') +
+    fmtP(pt.price) +
     '<br><span style="color:' + BANDS[band].c + '">■</span> <span style="color:var(--muted)">' + BANDS[band].label + '</span>';
   tip.style.display = 'block';
   const cx = cv.offsetLeft + view.xs(pt.t), cy = cv.offsetTop + view.ys(Math.log(pt.price));
@@ -447,8 +458,14 @@ const hideTip = () => { hoverPt = null; $('tooltip').style.display = 'none'; dra
 (async function init() {
   $('legend').innerHTML = [...BANDS].reverse()
     .map(b => '<span><i style="background:' + b.c + '"></i>' + b.label + '</span>').join('');
-  fetch('https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT')
-    .then(r => r.ok ? r.json() : null).then(j => { if (j) eurRate = parseFloat(j.price); }).catch(() => {});
+  await Devises.init('#cur', () => {
+    if (current && cache[current]) {
+      const c = COINS.find(x => x.short === current);
+      const pts = cache[current].pts;
+      if (c) setStatus(c, pts[pts.length - 1].price, false);
+      draw();
+    }
+  });
 
   const cv = $('chart');
   cv.addEventListener('mousemove', ev => showAt(ev.clientX));

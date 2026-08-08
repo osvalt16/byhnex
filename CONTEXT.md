@@ -67,6 +67,12 @@ la page conserve uniquement la surveillance de marche et les signaux.
   GitHub Actions recalcule les signaux et publie `data.json`, `widget*.txt` et les
   colonnes sur la branche `data` (widget KWGT), et envoie une notification ntfy a
   chaque entree en zone (canal secret dans le secret Actions `NTFY_TOPIC`).
+- `devises.js` : module partage par les 5 pages. Taux quotidiens depuis l'euro
+  (open.er-api, 166 devises, sans cle). Les pages fournissent des montants en euros
+  (fmt/conv) ou en dollars (fmtUsd/convUsd/fmtBigUsd), le module convertit et formate.
+  Choix memorise dans `byhnex-devise` : il est donc partage entre toutes les pages.
+  Seule exception a la regle « un fichier = une application » : la duplication du
+  module sur 5 pages aurait ete pire a maintenir.
 - `CONTEXT.md` : ce fichier.
 
 ## Regles APIs et donnees

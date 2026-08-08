@@ -199,6 +199,7 @@
   </div>
 </div>
 
+<script src="devises.js"></script>
 <script>
 'use strict';
 let COINS = [];
@@ -389,7 +390,7 @@ async function updateMarket() {
     else if (price < ma200 && ma50 < ma200) { regime = '🔴 Tendance de fond BAISSIÈRE'; cls = 'down'; }
     else { regime = '🟡 Tendance INDÉCISE (transition)'; cls = ''; }
     const f = n => (n >= 0 ? '+' : '') + n.toFixed(1) + ' %';
-    const fp = n => n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+    const fp = n => Devises.fmt(n, 0);
     const vs200 = ((price - ma200) / ma200 * 100);
     document.getElementById('market-bar').innerHTML =
       '🧭 <strong style="color:var(--text)">Marché Bitcoin :</strong> <strong class="' + cls + '">' + regime + '</strong>' +
@@ -442,42 +443,7 @@ function connectWS() {
   ws.onerror = () => ws.close();
 }
 
-// Les prix sont calcules en euros ; l'affichage les convertit dans la devise choisie.
-const MAJORS = ['EUR', 'USD', 'GBP', 'CHF', 'CAD', 'JPY', 'AUD'];
-let fx = { EUR: 1 };
-let curCode = localStorage.getItem('byhnex-devise') || 'EUR';
-
-const fmt = (n, d) => {
-  if (n === null || n === undefined || isNaN(n)) return '—';
-  const rate = fx[curCode] || 1;
-  const v = n * rate;
-  const dg = d ?? (v >= 1 ? 2 : v >= 0.001 ? 5 : 8);
-  try {
-    return v.toLocaleString('fr-FR', { style: 'currency', currency: curCode, minimumFractionDigits: dg, maximumFractionDigits: dg });
-  } catch (e) {   // code non reconnu par le navigateur
-    return v.toLocaleString('fr-FR', { minimumFractionDigits: dg, maximumFractionDigits: dg }) + ' ' + curCode;
-  }
-};
-
-async function loadDevises() {
-  const sel = document.getElementById('cur');
-  try {
-    const r = await fetch('https://open.er-api.com/v6/latest/EUR');
-    const j = await r.json();
-    if (j && j.rates) fx = Object.assign({ EUR: 1 }, j.rates);
-  } catch (e) { console.warn('taux de change indisponibles', e); }
-  if (!fx[curCode]) curCode = 'EUR';
-  const autres = Object.keys(fx).filter(c => !MAJORS.includes(c)).sort();
-  sel.innerHTML =
-    '<optgroup label="Principales">' + MAJORS.filter(c => fx[c]).map(c => '<option value="' + c + '">' + c + '</option>').join('') + '</optgroup>' +
-    '<optgroup label="Toutes les devises">' + autres.map(c => '<option value="' + c + '">' + c + '</option>').join('') + '</optgroup>';
-  sel.value = curCode;
-  sel.addEventListener('change', () => {
-    curCode = sel.value;
-    localStorage.setItem('byhnex-devise', curCode);
-    render();
-  });
-}
+const fmt = (n, d) => Devises.fmt(n, d);
 
 function trendHtml(t) {
   if (t === 'up') return '<span class="up" style="font-size:18px" title="Prix et moyenne 50 au-dessus de la moyenne 200 (bougies 15 min)">↗</span>';
@@ -540,7 +506,7 @@ async function refreshUniverse() {
 }
 
 (async function init() {
-  await Promise.all([buildCoins(), fetchRates(), loadDevises()]);
+  await Promise.all([buildCoins(), fetchRates(), Devises.init('#cur', render)]);
   render();
   seedTickers();
   await processNewCandles(true);

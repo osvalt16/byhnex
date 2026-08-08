@@ -88,6 +88,13 @@
     #status-bar { font-size: 13px; }
     #status-bar strong { font-size: 15px; }
   }
+  select.cur {
+    background: rgba(4,6,13,0.7); border: 1px solid var(--border); color: var(--accent);
+    border-radius: 7px; padding: 3px 7px; font-family: 'Inter', sans-serif; font-size: 11.5px;
+    font-weight: 600; cursor: pointer; text-transform: none; letter-spacing: 0; vertical-align: middle;
+  }
+  select.cur:focus { outline: none; border-color: var(--accent); }
+  select.cur option { background: #0b1020; color: var(--text); }
   .lecture { font-size: 11.5px; line-height: 1.45; }
   .fund-chip { padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .bar { height: 6px; border-radius: 3px; background: rgba(255,95,118,0.35); overflow: hidden; min-width: 60px; }
@@ -115,7 +122,10 @@
   <div class="panel"><div id="status-bar">⏳ Chargement des données de contrats à terme…</div></div>
 
   <div class="panel">
-    <div class="swipe-hint">👉 Fais glisser le tableau vers la gauche pour tout voir</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">
+      <span class="swipe-hint">👉 Fais glisser le tableau vers la gauche pour tout voir</span>
+      <select class="cur" id="cur" title="Changer de devise"></select>
+    </div>
     <div class="table-wrap" id="table-wrap"></div>
   </div>
 
@@ -163,6 +173,7 @@
   </p>
 </div>
 
+<script src="devises.js"></script>
 <script>
 'use strict';
 const STABLES = new Set(['usdt','usdc','usds','usde','dai','fdusd','tusd','pyusd','busd','usdp','gusd','eurc','eurt','usdtb','susds','usd1','bsc-usd','usdg','usyc','usdf','usdx','rlusd','frax','lusd','usd0','deusd','usdy','steth','wsteth','weeth','wbtc','cbbtc','weth','reth','wbeth','meth','ezeth','rseth','paxg','xaut','kau']);
@@ -201,10 +212,13 @@ async function buildCoins() {
   } catch (e) { console.warn(e); if (!COINS.length) COINS = FALLBACK; }
 }
 
-const fmtUsd = v => v >= 1e9 ? (v / 1e9).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' Md$'
-  : v >= 1e6 ? (v / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' M$'
-  : Math.round(v).toLocaleString('fr-FR') + ' $';
-const fmtPx = v => v >= 1000 ? v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) : v >= 0.001 ? v.toLocaleString('fr-FR', { maximumFractionDigits: v < 1 ? 4 : 2 }) : v.toPrecision(3);
+const fmtUsd = v => Devises.fmtBigUsd(v);
+const fmtPx = usd => {
+  const v = Devises.convUsd(usd);
+  return (v >= 1000 ? v.toLocaleString('fr-FR', { maximumFractionDigits: 0 })
+    : v >= 0.001 ? v.toLocaleString('fr-FR', { maximumFractionDigits: v < 1 ? 4 : 2 })
+    : v.toPrecision(3)) + ' ' + Devises.symbol();
+};
 const pct = (v, d) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(d ?? 1) + ' %';
 
 function fundingChip(annual) {
@@ -287,7 +301,7 @@ async function refresh() {
       const lsPct = r.ls ? r.ls.long * 100 : null;
       html += '<tr>' +
         '<td><strong>' + r.c.name + '</strong> <span style="color:var(--muted);font-size:11px">' + r.c.short + '</span></td>' +
-        '<td>' + fmtPx(r.price) + ' $</td>' +
+        '<td>' + fmtPx(r.price) + '</td>' +
         '<td class="' + (r.dPrice >= 0 ? 'up' : 'down') + '">' + (r.dPrice === null ? '—' : pct(r.dPrice, 2)) + '</td>' +
         '<td style="color:' + (r.funding8h >= 0 ? 'var(--muted)' : 'var(--green)') + '">' + r.funding8h.toFixed(4) + ' %</td>' +
         '<td>' + fc.html + '<br><span style="font-size:10.5px;color:' + fc.fg + '">' + fc.txt + '</span></td>' +
@@ -321,7 +335,7 @@ async function refresh() {
 }
 
 (async function init() {
-  await buildCoins();
+  await Promise.all([buildCoins(), Devises.init('#cur', refresh)]);
   await refresh();
   setInterval(refresh, 300000);
   setInterval(buildCoins, 15 * 60 * 1000);

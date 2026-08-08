@@ -77,6 +77,13 @@
   }
   .note { color: var(--muted); font-size: 12px; line-height: 1.7; }
   .error { display: none; background: rgba(255,95,118,0.08); border: 1px solid rgba(255,95,118,0.4); color: var(--red); padding: 13px 16px; border-radius: 12px; margin-bottom: 16px; font-size: 13px; }
+  select.cur {
+    background: rgba(4,6,13,0.7); border: 1px solid var(--border); color: var(--accent);
+    border-radius: 7px; padding: 3px 7px; font-family: 'Inter', sans-serif; font-size: 11.5px;
+    font-weight: 600; cursor: pointer; text-transform: none; letter-spacing: 0; vertical-align: middle;
+  }
+  select.cur:focus { outline: none; border-color: var(--accent); }
+  select.cur option { background: #0b1020; color: var(--text); }
   .swipe-hint { display: none; }
   @media (max-width: 700px) {
     body { padding: 16px 10px 40px; }
@@ -105,7 +112,10 @@
   <div class="panel"><div id="status-bar">⏳ Chargement des rendements mensuels depuis 2014…</div></div>
 
   <div class="panel">
-    <div class="swipe-hint">👉 Fais glisser le tableau vers la gauche pour voir toute l'année</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">
+      <span class="swipe-hint">👉 Fais glisser le tableau vers la gauche pour voir toute l'année</span>
+      <select class="cur" id="cur" title="Changer de devise"></select>
+    </div>
     <div class="table-wrap" id="table-wrap"></div>
   </div>
 
@@ -122,6 +132,7 @@
   </p>
 </div>
 
+<script src="devises.js"></script>
 <script>
 'use strict';
 const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
@@ -186,7 +197,7 @@ function render(livePrice) {
   const curRet = rets[curYear] && rets[curYear][curMonth];
   document.getElementById('status-bar').innerHTML =
     '<span>₿ Bitcoin <span style="color:var(--green);font-size:11px">● EN DIRECT</span> : <strong>' +
-    (livePrice ? livePrice.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' $' : '—') + '</strong></span>' +
+    (livePrice ? Devises.fmtUsd(livePrice, 0) : '—') + '</strong></span>' +
     (curRet !== null && curRet !== undefined ? '<span>' + MOIS[curMonth] + ' ' + curYear + ' en cours : <strong class="' + '' + '" style="color:var(--' + (curRet >= 0 ? 'green' : 'red') + ')">' + fmtR(curRet) + ' %</strong></span>' : '') +
     '<span style="font-size:12px">clôtures mensuelles 2014 → aujourd\'hui</span>';
 }
@@ -213,6 +224,7 @@ async function main() {
     const now = new Date();
     curYear = now.getUTCFullYear(); curMonth = now.getUTCMonth();
     curKey = curYear + '-' + String(curMonth + 1).padStart(2, '0');
+    await Devises.init('#cur', () => refreshLive());
     render(null);
     refreshLive();
     setInterval(refreshLive, 60000);
