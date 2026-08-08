@@ -122,10 +122,8 @@
   <div class="panel"><div id="status-bar">⏳ Chargement des données de contrats à terme…</div></div>
 
   <div class="panel">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">
-      <span class="swipe-hint">👉 Fais glisser le tableau vers la gauche pour tout voir</span>
-      <select class="cur" id="cur" title="Changer de devise"></select>
-    </div>
+    <div class="swipe-hint">👉 Fais glisser le tableau vers la gauche pour tout voir</div>
+    <select class="cur" id="cur" title="Changer de devise" style="display:none"></select>
     <div class="table-wrap" id="table-wrap"></div>
   </div>
 
@@ -288,7 +286,7 @@ async function refresh() {
       };
     }));
 
-    let html = '<table><thead><tr><th>Crypto</th><th>Prix</th><th>24h</th><th>Funding 8h</th><th>Funding annualisé</th>' +
+    let html = '<table><thead><tr><th>Crypto</th><th>Prix <span id="cur-slot"></span></th><th>24h</th><th>Funding 8h</th><th>Funding annualisé</th>' +
       '<th class="hide-mobile">Open interest</th><th class="hide-mobile">OI 24h</th><th class="hide-mobile">Comptes acheteurs</th><th class="hide-mobile">Lecture</th></tr></thead><tbody>';
     let totalOi = 0, nb = 0, sumAnnual = 0;
     for (const r of rows) {
@@ -314,6 +312,8 @@ async function refresh() {
     }
     html += '</tbody></table>';
     $('table-wrap').innerHTML = html;
+    const slot = $('cur-slot'), sel = $('cur');
+    if (slot && sel) { sel.style.display = ''; slot.appendChild(sel); }
     $('error').style.display = 'none';
 
     const moy = nb ? sumAnnual / nb : 0;
