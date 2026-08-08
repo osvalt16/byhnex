@@ -213,7 +213,7 @@ async function main() {
                 + ' Info, pas un conseil financier.',
               priority: 4,
               tags: [isBuy ? 'green_circle' : 'red_circle'],
-              click: 'https://osvalt16.github.io/michmich/signaux-crypto.html',
+              click: 'https://osvalt16.github.io/byhnex/signaux-crypto.html',
             }),
           });
           console.log(r.ok ? 'notif envoyee:' : 'ECHEC notif HTTP ' + r.status + ':', c.short, c.zone);
