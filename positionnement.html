@@ -165,7 +165,7 @@
 
 <script>
 'use strict';
-const STABLES = new Set(['usdt','usdc','usds','usde','dai','fdusd','tusd','pyusd','busd','usdp','gusd','eurc','eurt','usdtb','susds','usd1','bsc-usd','steth','wsteth','weeth','wbtc','cbbtc','weth','reth','wbeth']);
+const STABLES = new Set(['usdt','usdc','usds','usde','dai','fdusd','tusd','pyusd','busd','usdp','gusd','eurc','eurt','usdtb','susds','usd1','bsc-usd','usdg','usyc','usdf','usdx','rlusd','frax','lusd','usd0','deusd','usdy','steth','wsteth','weeth','wbtc','cbbtc','weth','reth','wbeth','meth','ezeth','rseth','paxg','xaut','kau']);
 const FALLBACK = [
   { short: 'BTC', name: 'Bitcoin' }, { short: 'ETH', name: 'Ethereum' }, { short: 'SOL', name: 'Solana' },
   { short: 'XRP', name: 'XRP' }, { short: 'DOGE', name: 'Dogecoin' },
@@ -177,7 +177,7 @@ async function buildCoins() {
   try {
     const [infoRes, topRes, cbRes] = await Promise.all([
       fetch('https://api.binance.com/api/v3/exchangeInfo'),
-      fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=30&page=1'),
+      fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=60&page=1'),
       fetch('https://api.exchange.coinbase.com/products').catch(() => null),
     ]);
     if (!infoRes.ok || !topRes.ok) throw new Error('HTTP');
@@ -195,7 +195,7 @@ async function buildCoins() {
       if (cbSet && !cbSet.has(short)) continue;
       if (!['EUR', 'USDC', 'USDT'].some(q => pairs.has(short + q))) continue;
       if (!list.some(x => x.short === short)) list.push({ short, name: c.name });
-      if (list.length === 10) break;
+      if (list.length === 20) break;
     }
     COINS = list.length >= 5 ? list : FALLBACK;
   } catch (e) { console.warn(e); if (!COINS.length) COINS = FALLBACK; }
@@ -204,7 +204,7 @@ async function buildCoins() {
 const fmtUsd = v => v >= 1e9 ? (v / 1e9).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' Md$'
   : v >= 1e6 ? (v / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' M$'
   : Math.round(v).toLocaleString('fr-FR') + ' $';
-const fmtPx = v => v >= 1000 ? v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) : v.toLocaleString('fr-FR', { maximumFractionDigits: v < 1 ? 4 : 2 });
+const fmtPx = v => v >= 1000 ? v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) : v >= 0.001 ? v.toLocaleString('fr-FR', { maximumFractionDigits: v < 1 ? 4 : 2 }) : v.toPrecision(3);
 const pct = (v, d) => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(d ?? 1) + ' %';
 
 function fundingChip(annual) {
@@ -226,6 +226,17 @@ function lecture(dPrice, dOi) {
   return '<span style="color:var(--gold)">purge du levier</span><br><span style="color:var(--muted)">positions fermées</span>';
 }
 
+// Binance cote les cryptos a tres bas prix par lots : SHIB devient 1000SHIBUSDT.
+// Le prix affiche est alors celui de 1000 unites, mais funding, open interest
+// en dollars et ratio long/short restent valides tels quels.
+function futuresSymbol(short, pMap) {
+  for (const p of ['', '1000', '1000000']) {
+    const sym = p + short + 'USDT';
+    if (pMap[sym]) return { sym, lot: p === '' ? 1 : parseInt(p) };
+  }
+  return null;
+}
+
 async function refresh() {
   try {
     const [prem, tick] = await Promise.all([
@@ -236,8 +247,9 @@ async function refresh() {
     const tMap = Object.fromEntries(tick.map(x => [x.symbol, x]));
 
     const rows = await Promise.all(COINS.map(async c => {
-      const sym = c.short + 'USDT';
-      if (!pMap[sym]) return { c, absent: true };
+      const f = futuresSymbol(c.short, pMap);
+      if (!f) return { c, absent: true };
+      const sym = f.sym, lot = f.lot;
       let oiNow = null, oiChg = null, ls = null;
       try {
         const h = await fetch('https://fapi.binance.com/futures/data/openInterestHist?symbol=' + sym + '&period=1h&limit=25').then(r => r.json());
@@ -251,11 +263,11 @@ async function refresh() {
         const r = await fetch('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=' + sym + '&period=1h&limit=1').then(r => r.json());
         if (Array.isArray(r) && r.length) ls = { long: parseFloat(r[0].longAccount), ratio: parseFloat(r[0].longShortRatio) };
       } catch (e) {}
-      const f = parseFloat(pMap[sym].lastFundingRate);
+      const fr = parseFloat(pMap[sym].lastFundingRate);
       const t = tMap[sym];
       return {
-        c, funding8h: f * 100, annual: f * 3 * 365 * 100,
-        price: parseFloat(pMap[sym].markPrice),
+        c, funding8h: fr * 100, annual: fr * 3 * 365 * 100,
+        price: parseFloat(pMap[sym].markPrice) / lot,
         dPrice: t ? parseFloat(t.priceChangePercent) : null,
         oi: oiNow, oiChg, ls,
         nextFunding: parseFloat(pMap[sym].nextFundingTime),
@@ -267,7 +279,7 @@ async function refresh() {
     let totalOi = 0, nb = 0, sumAnnual = 0;
     for (const r of rows) {
       if (r.absent) {
-        html += '<tr><td><strong>' + r.c.short + '</strong></td><td colspan="8" style="color:var(--muted)">pas de contrat perpétuel</td></tr>';
+        html += '<tr><td><strong>' + r.c.short + '</strong></td><td colspan="8" style="color:var(--muted)">pas de contrat à terme sur Binance</td></tr>';
         continue;
       }
       nb++; sumAnnual += r.annual; if (r.oi) totalOi += r.oi;

@@ -50,16 +50,16 @@ la page conserve uniquement la surveillance de marche et les signaux.
 - `index.html` : accueil Byhnex, cartes vers les quatre outils.
 - `crypto-dashboard.html` : suivi de prix top 20 (API CoinGecko, refresh 60 s) +
   quantites personnelles. Stockage : `crypto-portfolio-v1`.
-- `signaux-crypto.html` : top 10 tradable sur Coinbase, prix temps reel WebSocket
+- `signaux-crypto.html` : top 20 tradable sur Coinbase, prix temps reel WebSocket
   Binance, RSI 14 sur bougies 15 min, tendance 50/200, zones d'achat (<30) et de
   vente (>70), alertes navigateur. Aucune simulation de trading.
-- `rainbow-crypto.html` : Rainbow Chart des 10 cryptos du meme univers que la page
+- `rainbow-crypto.html` : Rainbow Chart des 20 cryptos du meme univers que la page
   Signaux. Historique complet par crypto (CoinCodex) + prix live WebSocket Binance,
   regression log et 9 bandes calculees dans le navigateur pour chaque crypto,
-  onglets synchronises avec le top 10 (resynchronisation toutes les 15 min),
+  onglets synchronises avec le top 20 (resynchronisation toutes les 15 min),
   infobulle $/EUR au survol. Avertissement si moins de 4 ans d'historique.
 - `positionnement.html` : donnees de contrats perpetuels Binance Futures pour le
-  meme top 10 : funding rate (8 h et annualise), open interest et sa variation 24 h,
+  meme top 20 : funding rate (8 h et annualise), open interest et sa variation 24 h,
   ratio long/short des comptes, et lecture croisee prix/OI. Refresh 5 min.
 - `saisonnalite-btc.html` : rendements mensuels BTC depuis 2014 en heatmap,
   mois en cours au prix live.
@@ -77,6 +77,10 @@ la page conserve uniquement la surveillance de marche et les signaux.
   pour le direct. Toujours filtrer les bougies non cloturees (`closeTime <= now`).
 - Toujours gerer l'echec reseau : afficher un etat « hors ligne », reessayer, ne jamais
   planter ni corrompre l'etat sauvegarde.
+- L'univers commun aux pages et au robot : top 20 par capitalisation, hors
+  stablecoins ET actifs adosses (or : PAXG, XAUT ; staking liquide : stETH...),
+  limite aux cryptos tradables sur Coinbase. Le classement CoinGecko est demande
+  sur 60 lignes car les filtres en eliminent beaucoup.
 - Ne jamais changer le nom d'une cle localStorage sans migration : ca effacerait
   le portefeuille ou l'historique du bot de l'utilisateur.
 

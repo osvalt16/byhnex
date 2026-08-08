@@ -57,7 +57,7 @@ async function fetchPositions() {
   } catch (e) { console.error('coinbase:', e.message); return null; }
 }
 
-const STABLES = new Set(['usdt','usdc','usds','usde','dai','fdusd','tusd','pyusd','busd','usdp','gusd','eurc','eurt','usdtb','susds','usd1','bsc-usd','steth','wsteth','weeth','wbtc','cbbtc','weth','reth','wbeth']);
+const STABLES = new Set(['usdt','usdc','usds','usde','dai','fdusd','tusd','pyusd','busd','usdp','gusd','eurc','eurt','usdtb','susds','usd1','bsc-usd','usdg','usyc','usdf','usdx','rlusd','frax','lusd','usd0','deusd','usdy','steth','wsteth','weeth','wbtc','cbbtc','weth','reth','wbeth','meth','ezeth','rseth','paxg','xaut','kau']);
 const RSI_PERIOD = 14, BUY_BELOW = 30, SELL_ABOVE = 70, INTERVAL = '15m';
 
 async function getJson(url) {
@@ -102,7 +102,7 @@ async function buildCoins(pairs, cbSet, top) {
     if (cbSet && !cbSet.has(short)) continue;
     const quote = ['EUR', 'USDC', 'USDT'].find(q => pairs.has(short + q));
     if (quote && !list.some(x => x.short === short)) list.push({ sym: short + quote, name: c.name, short, quote });
-    if (list.length === 10) break;
+    if (list.length === 20) break;
   }
   return list;
 }
@@ -110,7 +110,7 @@ async function buildCoins(pairs, cbSet, top) {
 async function main() {
   const [info, top, prods, rates] = await Promise.all([
     getJson('https://data-api.binance.vision/api/v3/exchangeInfo'),
-    getJson('https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=30&page=1'),
+    getJson('https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=60&page=1'),
     getJson('https://api.exchange.coinbase.com/products').catch(() => null),
     getJson('https://data-api.binance.vision/api/v3/ticker/price?symbols=' + encodeURIComponent('["EURUSDT","EURUSDC"]')),
   ]);
@@ -154,7 +154,7 @@ async function main() {
   fs.writeFileSync('out/data.json', JSON.stringify(data, null, 1));
 
   // Texte compact pour le widget KWGT (une seule formule cote telephone)
-  const fmtPx = p => p >= 1000 ? Math.round(p).toLocaleString('fr-FR') : p >= 1 ? p.toFixed(2) : p.toFixed(4);
+  const fmtPx = p => p >= 1000 ? Math.round(p).toLocaleString('fr-FR') : p >= 1 ? p.toFixed(2) : p >= 0.001 ? p.toFixed(4) : p.toPrecision(3);
   const arrow = t => t === 'up' ? '↗' : t === 'down' ? '↘' : t === 'flat' ? '→' : '·';
   const zicon = z => z === 'buy' ? '🟢' : z === 'sell' ? '🔴' : ' ';
   const lines = out.map(c =>
