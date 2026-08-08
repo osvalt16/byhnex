@@ -118,7 +118,7 @@
   <div class="error" id="error"></div>
 
   <div class="panel">
-    <h2 style="margin-bottom:10px">Crypto suivie — même top 10 que la page Signaux</h2>
+    <h2 style="margin-bottom:10px">Crypto suivie — top 10 par capitalisation</h2>
     <div class="coin-tabs" id="tabs"><span style="color:var(--muted);font-size:13px">⏳ Chargement du classement…</span></div>
   </div>
 
@@ -140,7 +140,9 @@
     📈 Historique quotidien en dollars depuis les origines de chaque crypto (source CoinCodex) + prix en direct via WebSocket Binance.<br>
     📐 Méthode : régression ln(prix) = a + b·ln(jours depuis le premier cours connu), puis 9 bandes réparties
     uniformément en échelle logarithmique autour de la tendance, prolongées 18 mois.<br>
-    🔄 Le classement se rafraîchit toutes les 15 minutes : si une crypto entre dans le top 10, son onglet apparaît ici automatiquement.<br>
+    🔄 Le classement se rafraîchit toutes les 15 minutes : si une crypto entre dans le top 10, son onglet apparaît ici automatiquement.
+    Les pages Signaux et Positionnement, elles, suivent le top 20 — le Rainbow reste sur les 10 plus grosses capitalisations,
+    les seules dont l'historique est assez long pour que la régression ait du sens.<br>
     👆 Survole ou touche le graphique : date, prix en $ et en €, et bande de l'époque.
   </p>
 </div>
@@ -194,7 +196,7 @@ async function buildCoins() {
       // pour le graphique en dollars, on prefere une paire USDT/USDC
       const quote = ['USDT', 'USDC', 'EUR'].find(q => pairs.has(short + q));
       if (quote && !list.some(x => x.short === short)) list.push({ short, name: c.name, wsSym: short + quote, quote });
-      if (list.length === 20) break;
+      if (list.length === 10) break;
     }
     COINS = list.length >= 5 ? list : FALLBACK;
   } catch (e) {
