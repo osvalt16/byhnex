@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Backtest de stratégie — Byhnex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #04060d; --card: rgba(12,18,36,0.66); --border: rgba(96,140,255,0.14);
+    --border-strong: rgba(62,198,255,0.4);
+    --text: #e9eefb; --muted: #8391ad;
+    --green: #2be3a4; --red: #ff5f76; --accent: #3ec6ff; --violet: #9a6bff; --gold: #e6b95c;
+    --glow-cyan: rgba(62,198,255,0.3); --glow-violet: rgba(154,107,255,0.25);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    padding: 26px 20px 60px; position: relative;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -2;
+    background:
+      radial-gradient(640px 420px at 15% -5%, var(--glow-cyan), transparent 65%),
+      radial-gradient(700px 480px at 90% 105%, var(--glow-violet), transparent 65%);
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(99,140,255,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,140,255,0.045) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 75%);
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand img { width: 46px; height: 46px; border-radius: 12px; filter: drop-shadow(0 0 14px var(--glow-cyan)); }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;
+    background: linear-gradient(94deg, #f2f8ff 5%, var(--accent) 55%, var(--violet));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  a.back { color: var(--muted); font-size: 13px; text-decoration: none; }
+  a.back:hover { color: var(--accent); }
+  .panel {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 16px 18px; margin-bottom: 16px; position: relative; overflow: hidden;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  }
+  .panel::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(62,198,255,0.5), transparent);
+  }
+  #status-bar { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; }
+  #status-bar strong { color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 17px; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 880px; font-size: 12.5px; }
+  th, td { padding: 7px 6px; text-align: right; border-bottom: 1px solid rgba(96,140,255,0.08); white-space: nowrap; }
+  th { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; font-weight: 600; position: sticky; left: 0; background: #0b1020; }
+  tbody tr:hover td { filter: brightness(1.25); }
+  tr.stats td { border-top: 1px solid var(--border); font-weight: 600; }
+  td.cur { outline: 1px dashed rgba(62,198,255,0.7); outline-offset: -2px; font-style: italic; }
+  .warn {
+    background: rgba(230,185,92,0.06); border: 1px solid rgba(230,185,92,0.3); border-radius: 14px;
+    padding: 13px 18px; font-size: 12.5px; color: var(--gold); margin-bottom: 16px; line-height: 1.6;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  }
+  .note { color: var(--muted); font-size: 12px; line-height: 1.7; }
+  .error { display: none; background: rgba(255,95,118,0.08); border: 1px solid rgba(255,95,118,0.4); color: var(--red); padding: 13px 16px; border-radius: 12px; margin-bottom: 16px; font-size: 13px; }
+  .swipe-hint { display: none; }
+  @media (max-width: 700px) {
+    body { padding: 16px 10px 40px; }
+    h1 { font-size: 18px; }
+    .brand img { width: 38px; height: 38px; }
+    th, td { padding: 6px 5px; font-size: 11px; }
+    table { min-width: 700px; }
+    .swipe-hint { display: block; color: var(--accent); font-size: 12px; margin-bottom: 8px; }
+    #status-bar { font-size: 13px; }
+    #status-bar strong { font-size: 15px; }
+  }
+  select.cur {
+    background: rgba(4,6,13,0.7); border: 1px solid var(--border); color: var(--accent);
+    border-radius: 7px; padding: 3px 7px; font-family: 'Inter', sans-serif; font-size: 11.5px;
+    font-weight: 600; cursor: pointer; text-transform: none; letter-spacing: 0; vertical-align: middle;
+  }
+  select.cur:focus { outline: none; border-color: var(--accent); }
+  select.cur option { background: #0b1020; color: var(--text); }
+  .lecture { font-size: 11.5px; line-height: 1.45; }
+  .fund-chip { padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .bar { height: 6px; border-radius: 3px; background: rgba(255,95,118,0.35); overflow: hidden; min-width: 60px; }
+  .bar > i { display: block; height: 100%; background: var(--green); }
+  details.help { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; }
+  details.help summary { cursor: pointer; color: var(--accent); font-size: 13.5px; font-weight: 600; padding: 4px 0; }
+  details.help .body { color: var(--muted); font-size: 13px; line-height: 1.75; padding-top: 10px; }
+  details.help .body strong { color: var(--text); }
+  details.help .body li { margin-bottom: 7px; }
+  details.help .body ul { padding-left: 20px; margin: 8px 0; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  label { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 5px; font-weight: 600; }
+  input, select.p { width: 100%; background: rgba(4,6,13,0.6); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 9px 11px; font-size: 13.5px; font-family: 'Inter', sans-serif; }
+  input:focus, select.p:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 14px -6px var(--accent); }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); margin-top: 22px; }
+  .check input { width: auto; }
+  button.go {
+    background: rgba(62,198,255,0.12); border: 1px solid var(--accent); color: var(--accent);
+    border-radius: 999px; padding: 11px 26px; font-family: 'Inter', sans-serif; font-size: 14px;
+    font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  button.go:hover { background: rgba(62,198,255,0.22); box-shadow: 0 0 22px -8px var(--accent); }
+  button.go:disabled { opacity: 0.5; cursor: wait; }
+  .res { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .res-card { background: rgba(4,6,13,0.45); border: 1px solid var(--border); border-radius: 13px; padding: 13px 15px; }
+  .res-card .l { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1.3px; margin-bottom: 5px; font-weight: 600; }
+  .res-card .v { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; }
+  .res-card .s { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .verdict { padding: 14px 16px; border-radius: 13px; font-size: 13.5px; line-height: 1.65; margin-bottom: 16px; }
+  .verdict.win { background: rgba(43,227,164,0.08); border: 1px solid rgba(43,227,164,0.35); }
+  .verdict.lose { background: rgba(255,95,118,0.08); border: 1px solid rgba(255,95,118,0.35); }
+  canvas { width: 100%; height: auto; display: block; border-radius: 8px; }
+  .lg { display: flex; gap: 16px; font-size: 11.5px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
+  .lg i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  .log { max-height: 260px; overflow-y: auto; }
+  .log::-webkit-scrollbar { width: 8px; }
+  .log::-webkit-scrollbar-thumb { background: rgba(96,140,255,0.25); border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand">
+      <img src="logo.png" alt="">
+      <h1>🧪 Backtest de stratégie</h1>
+    </div>
+    <a class="back" href="index.html">← Accueil</a>
+  </header>
+
+  <div class="error" id="error"></div>
+
+  <div class="panel">
+    <h2>⚙️ Paramètres</h2>
+    <div class="form-grid">
+      <div><label for="coin">Crypto</label><select class="p" id="coin"></select></div>
+      <div><label for="iv">Bougies</label><select class="p" id="iv">
+        <option value="1d">1 jour</option><option value="4h">4 heures</option>
+        <option value="1h">1 heure</option><option value="15m">15 minutes</option>
+      </select></div>
+      <div><label for="nb">Profondeur (bougies)</label><select class="p" id="nb">
+        <option value="500">500</option><option value="1000">1 000</option>
+        <option value="2000">2 000</option><option value="3000" selected>3 000 (max)</option>
+      </select></div>
+      <div><label for="capital">Capital de départ</label><input type="number" id="capital" value="1000" min="1" step="any"></div>
+      <div><label for="period">Période RSI</label><input type="number" id="period" value="14" min="2" max="50"></div>
+      <div><label for="buy">Acheter si RSI &lt;</label><input type="number" id="buy" value="30" min="1" max="99"></div>
+      <div><label for="sell">Vendre si RSI &gt;</label><input type="number" id="sell" value="70" min="1" max="99"></div>
+      <div><label for="fee">Frais par ordre (%)</label><input type="number" id="fee" value="0.6" min="0" step="0.01"></div>
+      <div><label for="stop">Stop-loss (%, 0 = aucun)</label><input type="number" id="stop" value="0" min="0" step="0.5"></div>
+      <div><label class="check" for="trend"><input type="checkbox" id="trend"> Acheter seulement au-dessus de la moyenne 200</label></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <button class="go" id="run">▶ Lancer le backtest</button>
+      <select class="cur" id="cur" title="Changer de devise"></select>
+      <span id="loading" style="color:var(--muted);font-size:13px"></span>
+    </div>
+  </div>
+
+  <div id="out" style="display:none">
+    <div class="panel">
+      <h2>📊 Résultat</h2>
+      <div class="res" id="cards"></div>
+      <div id="verdict"></div>
+    </div>
+
+    <div class="panel">
+      <h2>📈 Évolution du capital</h2>
+      <canvas id="chart"></canvas>
+      <div class="lg">
+        <span><i style="background:#3ec6ff"></i>Stratégie</span>
+        <span><i style="background:#8391ad"></i>Acheter et ne rien faire</span>
+        <span style="color:var(--muted)">Échelle logarithmique : une même hauteur = un même pourcentage.</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>📜 Journal des opérations</h2>
+      <div class="table-wrap log"><table id="trades"></table></div>
+    </div>
+  </div>
+
+  <div class="warn">
+    ⚠️ <strong>Un backtest décrit le passé, il ne prédit rien.</strong> Une stratégie qui a bien marché
+    sur ces données peut échouer demain : les marchés changent, et à force d'ajuster les réglages
+    jusqu'à ce que le résultat soit beau, on finit par « apprendre par cœur » l'histoire plutôt que d'y
+    découvrir une règle. Ceci n'est pas un conseil financier.
+  </div>
+
+  <p class="note">
+    📐 La stratégie s'évalue uniquement à la <strong>clôture</strong> de chaque bougie : aucune information
+    future n'est utilisée. À l'achat, tout le capital disponible est engagé ; à la vente, tout est soldé.<br>
+    💸 Les frais sont prélevés sur chaque ordre, à l'achat comme à la vente : c'est ce que la plupart des
+    backtests oublient, et c'est ce qui transforme une stratégie « gagnante » en perdante.<br>
+    📊 « Acheter et ne rien faire » achète au premier jour de la période testée et ne touche plus à rien.
+    C'est la référence honnête : une stratégie qui ne la bat pas ne sert à rien.<br>
+    📉 Le pire recul est la plus forte baisse subie depuis un sommet : c'est ce qu'il aurait fallu supporter sans céder.<br>
+    📡 Données : bougies Binance (paires USDT). La profondeur disponible dépend du format de bougie choisi.
+  </p>
+</div>
+
+<script src="devises.js"></script>
+<script>
+'use strict';
+const STABLES = new Set(['usdt','usdc','usds','usde','dai','fdusd','tusd','pyusd','busd','usdp','gusd','eurc','eurt','usdtb','susds','usd1','bsc-usd','usdg','usyc','usdf','usdx','rlusd','frax','lusd','usd0','deusd','usdy','steth','wsteth','weeth','wbtc','cbbtc','weth','reth','wbeth','meth','ezeth','rseth','paxg','xaut','kau']);
+const FALLBACK = [{ short: 'BTC', name: 'Bitcoin' }, { short: 'ETH', name: 'Ethereum' }, { short: 'SOL', name: 'Solana' }, { short: 'DOGE', name: 'Dogecoin' }];
+const $ = id => document.getElementById(id);
+let COINS = [], last = null;
+
+async function buildCoins() {
+  try {
+    const [infoRes, topRes, cbRes] = await Promise.all([
+      fetch('https://api.binance.com/api/v3/exchangeInfo'),
+      fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=60&page=1'),
+      fetch('https://api.exchange.coinbase.com/products').catch(() => null),
+    ]);
+    const info = await infoRes.json(), top = await topRes.json();
+    let cbSet = null;
+    if (cbRes && cbRes.ok) {
+      const p = await cbRes.json();
+      cbSet = new Set(p.filter(x => (x.quote_currency === 'USD' || x.quote_currency === 'USDC') && x.status === 'online' && !x.trading_disabled).map(x => x.base_currency));
+    }
+    const pairs = new Set(info.symbols.filter(s => s.status === 'TRADING').map(s => s.symbol));
+    const list = [];
+    for (const c of top) {
+      if (STABLES.has(c.symbol.toLowerCase())) continue;
+      const short = c.symbol.toUpperCase();
+      if (cbSet && !cbSet.has(short)) continue;
+      if (!pairs.has(short + 'USDT')) continue;
+      if (!list.some(x => x.short === short)) list.push({ short, name: c.name });
+      if (list.length === 20) break;
+    }
+    COINS = list.length >= 5 ? list : FALLBACK;
+  } catch (e) { COINS = FALLBACK; }
+  $('coin').innerHTML = COINS.map(c => '<option value="' + c.short + '">' + c.name + ' (' + c.short + ')</option>').join('');
+}
+
+async function klines(sym, iv, limit, onProgress) {
+  const out = []; let end = Date.now();
+  while (out.length < limit) {
+    const n = Math.min(1000, limit - out.length);
+    const r = await fetch('https://api.binance.com/api/v3/klines?symbol=' + sym + '&interval=' + iv + '&limit=' + n + '&endTime=' + end);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const raw = await r.json();
+    if (!Array.isArray(raw) || !raw.length) break;
+    out.unshift(...raw.map(k => ({ t: k[6], c: parseFloat(k[4]) })));
+    end = raw[0][0] - 1;
+    if (onProgress) onProgress(out.length);
+    if (raw.length < n) break;
+  }
+  return out.filter(k => k.t <= Date.now());
+}
+
+function rsiSeries(closes, period) {
+  const out = new Array(closes.length).fill(null);
+  if (closes.length <= period) return out;
+  let g = 0, l = 0;
+  for (let i = 1; i <= period; i++) { const d = closes[i] - closes[i-1]; g += Math.max(d, 0); l += Math.max(-d, 0); }
+  g /= period; l /= period;
+  out[period] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+  for (let i = period + 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i-1];
+    g = (g * (period - 1) + Math.max(d, 0)) / period;
+    l = (l * (period - 1) + Math.max(-d, 0)) / period;
+    out[i] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+  }
+  return out;
+}
+const smaAt = (arr, n, i) => { if (i + 1 < n) return null; let s = 0; for (let k = i - n + 1; k <= i; k++) s += arr[k]; return s / n; };
+
+/* Tout est evalue a la CLOTURE de la bougie : jamais d'information future. */
+function backtest(candles, o) {
+  const closes = candles.map(c => c.c);
+  const rsis = rsiSeries(closes, o.period);
+  let cash = o.capital, qty = 0, entry = 0, fees = 0;
+  const trades = [], equity = [];
+  const start = Math.max(o.period + 1, o.trend ? 200 : 0);
+  if (start >= candles.length) return null;
+  for (let i = start; i < candles.length; i++) {
+    const px = closes[i], rsi = rsis[i];
+    if (qty > 0 && o.stop > 0 && px <= entry * (1 - o.stop)) {
+      const gross = qty * px, f = gross * o.fee;
+      cash += gross - f; fees += f;
+      trades.push({ t: candles[i].t, type: 'stop', px, pnl: (gross - f) - qty * entry });
+      qty = 0;
+    }
+    if (rsi !== null) {
+      const ok = !o.trend || (() => { const m = smaAt(closes, 200, i); return m !== null && px > m; })();
+      if (qty === 0 && rsi < o.buy && ok && cash > 0) {
+        const f = cash * o.fee;
+        qty = (cash - f) / px; entry = px; fees += f; cash = 0;
+        trades.push({ t: candles[i].t, type: 'achat', px, rsi });
+      } else if (qty > 0 && rsi > o.sell) {
+        const gross = qty * px, f = gross * o.fee;
+        cash += gross - f; fees += f;
+        trades.push({ t: candles[i].t, type: 'vente', px, rsi, pnl: (gross - f) - qty * entry });
+        qty = 0;
+      }
+    }
+    equity.push({ t: candles[i].t, v: cash + qty * px, h: o.capital / closes[start] * px });
+  }
+  const final = cash + qty * closes[closes.length - 1];
+  const hold = o.capital / closes[start] * closes[closes.length - 1];
+  const closed = trades.filter(t => t.pnl !== undefined);
+  const dd = a => { let peak = -Infinity, m = 0; for (const v of a) { if (v > peak) peak = v; const d = (peak - v) / peak; if (d > m) m = d; } return m * 100; };
+  const enPos = equity.length ? trades.filter(t => t.type === 'achat').length : 0;
+  return {
+    final, hold, fees, trades, equity, capital: o.capital,
+    rendement: (final / o.capital - 1) * 100,
+    rendementHold: (hold / o.capital - 1) * 100,
+    nbTrades: closed.length,
+    reussite: closed.length ? closed.filter(t => t.pnl > 0).length / closed.length * 100 : null,
+    ddStrat: dd(equity.map(e => e.v)), ddHold: dd(equity.map(e => e.h)),
+    debut: candles[start].t, fin: candles[candles.length - 1].t,
+  };
+}
+
+const pct = n => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(1) + ' %';
+const money = v => Devises.fmtUsd(v, v >= 1000 ? 0 : 2);
+
+function afficher(r, coin) {
+  const bat = r.rendement > r.rendementHold;
+  const ecart = r.rendement - r.rendementHold;
+  const dur = ((r.fin - r.debut) / (365.25 * 86400000));
+  $('cards').innerHTML = `
+    <div class="res-card"><div class="l">Capital final</div><div class="v ${r.rendement >= 0 ? 'up' : 'down'}">${money(r.final)}</div><div class="s">${pct(r.rendement)} depuis ${money(r.capital)}</div></div>
+    <div class="res-card"><div class="l">Acheter et ne rien faire</div><div class="v ${r.rendementHold >= 0 ? 'up' : 'down'}">${money(r.hold)}</div><div class="s">${pct(r.rendementHold)}</div></div>
+    <div class="res-card"><div class="l">Écart</div><div class="v ${bat ? 'up' : 'down'}">${pct(ecart)}</div><div class="s">${bat ? 'la stratégie fait mieux' : 'la stratégie fait moins bien'}</div></div>
+    <div class="res-card"><div class="l">Opérations</div><div class="v">${r.nbTrades}</div><div class="s">${r.reussite !== null ? r.reussite.toFixed(0) + ' % gagnantes' : '—'}</div></div>
+    <div class="res-card"><div class="l">Pire recul subi</div><div class="v down">−${r.ddStrat.toFixed(0)} %</div><div class="s">contre −${r.ddHold.toFixed(0)} % en gardant</div></div>
+    <div class="res-card"><div class="l">Frais payés</div><div class="v">${money(r.fees)}</div><div class="s">${(r.fees / r.capital * 100).toFixed(1)} % du capital initial</div></div>`;
+
+  let txt;
+  if (r.nbTrades === 0) {
+    txt = '<div class="verdict lose">⚠️ <strong>Aucune opération déclenchée</strong> sur cette période : les seuils ne sont jamais atteints. Élargis-les (par exemple 40 et 60) ou choisis une profondeur plus grande.</div>';
+  } else if (bat) {
+    txt = `<div class="verdict win">✅ <strong>La stratégie bat l'immobilisme de ${pct(ecart)}</strong> sur ${dur.toFixed(1)} an(s), en ${r.nbTrades} opérations.
+      Regarde aussi le pire recul : ${r.ddStrat.toFixed(0)} % contre ${r.ddHold.toFixed(0)} % — ${r.ddStrat < r.ddHold ? 'elle a en plus moins fait souffrir' : 'elle a fait souffrir davantage'}.
+      Un bon résultat sur une crypto et une période ne prouve rien : teste les autres cryptos et d'autres profondeurs avant de conclure.</div>`;
+  } else {
+    txt = `<div class="verdict lose">❌ <strong>La stratégie perd ${pct(Math.abs(ecart))} face à « acheter et ne rien faire »</strong> sur ${dur.toFixed(1)} an(s).
+      ${r.reussite !== null && r.reussite >= 60 ? 'Remarque le paradoxe : ' + r.reussite.toFixed(0) + ' % des opérations sont gagnantes et pourtant le résultat est inférieur — la stratégie coupe ses gains trop tôt et rate les grandes hausses. ' : ''}
+      Son seul avantage ici : un pire recul de ${r.ddStrat.toFixed(0)} % contre ${r.ddHold.toFixed(0)} %${r.ddStrat < r.ddHold ? ', donc moins de souffrance en chemin' : ''}.</div>`;
+  }
+  $('verdict').innerHTML = txt;
+
+  const rows = [...r.trades].reverse().slice(0, 100).map(t => `<tr>
+    <td>${new Date(t.t).toLocaleDateString('fr-FR')}</td>
+    <td class="${t.type === 'achat' ? 'up' : 'down'}"><strong>${t.type === 'achat' ? 'ACHAT' : t.type === 'stop' ? 'STOP' : 'VENTE'}</strong></td>
+    <td>${money(t.px)}</td>
+    <td>${t.rsi !== undefined ? 'RSI ' + t.rsi.toFixed(1) : ''}</td>
+    <td class="${t.pnl >= 0 ? 'up' : 'down'}">${t.pnl !== undefined ? (t.pnl >= 0 ? '+' : '−') + money(Math.abs(t.pnl)) : ''}</td></tr>`).join('');
+  $('trades').innerHTML = '<thead><tr><th>Date</th><th>Type</th><th>Prix</th><th>RSI</th><th>Résultat</th></tr></thead><tbody>' + rows + '</tbody>';
+
+  last = r;
+  dessiner();
+  $('out').style.display = '';
+}
+
+function dessiner() {
+  if (!last) return;
+  const cv = $('chart'), eq = last.equity;
+  const W = cv.parentElement.clientWidth - 36, H = Math.max(280, Math.min(440, Math.round(W * 0.42)));
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + 'px';
+  const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+  const ML = 62, MR = 10, MT = 10, MB = 24;
+  let lo = Infinity, hi = -Infinity;
+  for (const e of eq) { for (const v of [e.v, e.h]) { if (v > 0) { const l = Math.log(v); if (l < lo) lo = l; if (l > hi) hi = l; } } }
+  lo -= 0.05; hi += 0.05;
+  const t0 = eq[0].t, t1 = eq[eq.length - 1].t;
+  const xs = t => ML + (t - t0) / (t1 - t0) * (W - ML - MR);
+  const ys = v => MT + (hi - Math.log(Math.max(v, 1e-9))) / (hi - lo) * (H - MT - MB);
+  ctx.clearRect(0, 0, W, H);
+  ctx.font = '11px Inter, sans-serif'; ctx.fillStyle = '#8391ad'; ctx.strokeStyle = 'rgba(233,238,251,0.1)';
+  for (let e = -2; e <= 9; e++) {
+    const v = Math.pow(10, e); const l = Math.log(v);
+    if (l < lo || l > hi) continue;
+    const y = ys(v);
+    ctx.beginPath(); ctx.moveTo(ML, y); ctx.lineTo(W - MR, y); ctx.stroke();
+    ctx.fillText(Devises.fmtUsd(v, 0), 4, y + 4);
+  }
+  const yr0 = new Date(t0).getFullYear(), yr1 = new Date(t1).getFullYear();
+  for (let yr = yr0 + 1; yr <= yr1; yr++) {
+    const x = xs(Date.UTC(yr, 0, 1));
+    if (x > ML && x < W - MR) ctx.fillText(String(yr), x - 12, H - 8);
+  }
+  const trace = (key, color, width) => {
+    ctx.beginPath();
+    eq.forEach((e, i) => { const x = xs(e.t), y = ys(e[key]); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
+  };
+  trace('h', '#8391ad', 1.4);
+  trace('v', '#3ec6ff', 2);
+}
+
+async function lancer() {
+  const btn = $('run');
+  btn.disabled = true; $('error').style.display = 'none';
+  const short = $('coin').value;
+  try {
+    $('loading').textContent = 'Téléchargement des bougies…';
+    const candles = await klines(short + 'USDT', $('iv').value, parseInt($('nb').value),
+      n => { $('loading').textContent = 'Téléchargement… ' + n + ' bougies'; });
+    if (candles.length < 60) throw new Error('pas assez de données');
+    $('loading').textContent = 'Calcul…';
+    const r = backtest(candles, {
+      period: parseInt($('period').value) || 14,
+      buy: parseFloat($('buy').value) || 30,
+      sell: parseFloat($('sell').value) || 70,
+      fee: (parseFloat($('fee').value) || 0) / 100,
+      capital: parseFloat($('capital').value) || 1000,
+      stop: (parseFloat($('stop').value) || 0) / 100,
+      trend: $('trend').checked,
+    });
+    if (!r) throw new Error('période trop courte pour ces réglages');
+    afficher(r, short);
+    $('loading').textContent = candles.length + ' bougies analysées';
+  } catch (e) {
+    $('error').style.display = 'block';
+    $('error').textContent = 'Backtest impossible : ' + e.message + '.';
+    $('loading').textContent = '';
+  }
+  btn.disabled = false;
+}
+
+(async function init() {
+  await Promise.all([buildCoins(), Devises.init('#cur', () => { if (last) { afficher(last, $('coin').value); } })]);
+  $('run').addEventListener('click', lancer);
+  window.addEventListener('resize', dessiner);
+  lancer();
+})();
+</script>
+</body>
+</html>
