@@ -353,10 +353,11 @@ function draw() {
   if (!e) return;
   const pts = e.pts, edge = e.model.edge, curBand = e.model.curBand;
   const canvas = $('chart');
-  const W = canvas.parentElement.clientWidth - 36;
+  const W = canvas.clientWidth;                 // largeur reellement occupee (width:100%)
+  if (!W || W < 50) { requestAnimationFrame(draw); return; }
   const H = Math.max(320, Math.min(500, Math.round(W * 0.48)));
   const dpr = window.devicePixelRatio || 1;
-  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
   canvas.style.height = H + 'px';
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
