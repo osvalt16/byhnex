@@ -95,6 +95,14 @@
   .flash-up { animation: fup 0.6s; } .flash-down { animation: fdn 0.6s; }
   @keyframes fup { 0% { background: rgba(43,227,164,0.22); } 100% { background: transparent; } }
   @keyframes fdn { 0% { background: rgba(255,95,118,0.22); } 100% { background: transparent; } }
+  select.cur {
+    background: rgba(4,6,13,0.7); border: 1px solid var(--border); color: var(--accent);
+    border-radius: 7px; padding: 3px 6px; font-family: 'Inter', sans-serif; font-size: 11px;
+    font-weight: 600; cursor: pointer; margin-left: 6px; text-transform: none; letter-spacing: 0;
+    vertical-align: middle; max-width: 92px;
+  }
+  select.cur:focus { outline: none; border-color: var(--accent); }
+  select.cur option { background: #0b1020; color: var(--text); }
   h2 { font-family: 'Space Grotesk', sans-serif; font-size: 13px; margin-bottom: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1.6px; }
   .log {
     background: var(--card); border: 1px solid var(--border); border-radius: 16px;
@@ -164,7 +172,7 @@
   <div class="table-wrap">
   <table>
     <thead>
-      <tr><th>Crypto</th><th>Prix (temps réel)</th><th>24h</th><th>RSI</th><th>Tendance</th></tr>
+      <tr><th>Crypto</th><th>Prix (temps réel)<select class="cur" id="cur" title="Changer de devise"></select></th><th>24h</th><th>RSI</th><th>Tendance</th></tr>
     </thead>
     <tbody id="tbody"></tbody>
   </table>
@@ -182,6 +190,7 @@
     <p class="note">
       🏆 Liste : top 10 par capitalisation (hors stablecoins), limité aux cryptos tradables sur Coinbase (USDC/USD) — reclassé en direct toutes les 15 min. Prix sans paire EUR convertis depuis USDC/USDT. Exclus : TRON et LEO (pas sur Coinbase), HYPE (aucun flux de données Binance).<br>
       📡 Prix : WebSocket Binance (temps réel, tick par tick) · RSI recalculé à la clôture de chaque bougie de 15 min.<br>
+      💱 Devise : le sélecteur en haut de la colonne Prix convertit l'affichage dans 160 devises (taux quotidiens). Le RSI et la tendance ne changent pas : ils ne dépendent pas de la devise.<br>
       🧭 Colonne Tendance : direction de fond de chaque crypto (moyennes 50/200 sur bougies 15 min). Un ⚠️ s'affiche quand le RSI contredit la tendance — RSI rouge + ↗ peut continuer de monter, RSI vert + ↘ peut continuer de chuter.<br>
       🔔 Alertes ON : notification, bip et titre clignotant quand une crypto entre en zone d'achat ou de vente (page ouverte requise).<br>
       📲 Les alertes push sur ton téléphone, elles, fonctionnent même page fermée : elles viennent du robot qui tourne sur GitHub.
@@ -433,8 +442,42 @@ function connectWS() {
   ws.onerror = () => ws.close();
 }
 
-const fmt = (n, d) => n === null || n === undefined || isNaN(n) ? '—'
-  : n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: d ?? (n >= 1 ? 2 : n >= 0.001 ? 5 : 8), maximumFractionDigits: d ?? (n >= 1 ? 2 : n >= 0.001 ? 5 : 8) });
+// Les prix sont calcules en euros ; l'affichage les convertit dans la devise choisie.
+const MAJORS = ['EUR', 'USD', 'GBP', 'CHF', 'CAD', 'JPY', 'AUD'];
+let fx = { EUR: 1 };
+let curCode = localStorage.getItem('byhnex-devise') || 'EUR';
+
+const fmt = (n, d) => {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const rate = fx[curCode] || 1;
+  const v = n * rate;
+  const dg = d ?? (v >= 1 ? 2 : v >= 0.001 ? 5 : 8);
+  try {
+    return v.toLocaleString('fr-FR', { style: 'currency', currency: curCode, minimumFractionDigits: dg, maximumFractionDigits: dg });
+  } catch (e) {   // code non reconnu par le navigateur
+    return v.toLocaleString('fr-FR', { minimumFractionDigits: dg, maximumFractionDigits: dg }) + ' ' + curCode;
+  }
+};
+
+async function loadDevises() {
+  const sel = document.getElementById('cur');
+  try {
+    const r = await fetch('https://open.er-api.com/v6/latest/EUR');
+    const j = await r.json();
+    if (j && j.rates) fx = Object.assign({ EUR: 1 }, j.rates);
+  } catch (e) { console.warn('taux de change indisponibles', e); }
+  if (!fx[curCode]) curCode = 'EUR';
+  const autres = Object.keys(fx).filter(c => !MAJORS.includes(c)).sort();
+  sel.innerHTML =
+    '<optgroup label="Principales">' + MAJORS.filter(c => fx[c]).map(c => '<option value="' + c + '">' + c + '</option>').join('') + '</optgroup>' +
+    '<optgroup label="Toutes les devises">' + autres.map(c => '<option value="' + c + '">' + c + '</option>').join('') + '</optgroup>';
+  sel.value = curCode;
+  sel.addEventListener('change', () => {
+    curCode = sel.value;
+    localStorage.setItem('byhnex-devise', curCode);
+    render();
+  });
+}
 
 function trendHtml(t) {
   if (t === 'up') return '<span class="up" style="font-size:18px" title="Prix et moyenne 50 au-dessus de la moyenne 200 (bougies 15 min)">↗</span>';
@@ -497,7 +540,7 @@ async function refreshUniverse() {
 }
 
 (async function init() {
-  await Promise.all([buildCoins(), fetchRates()]);
+  await Promise.all([buildCoins(), fetchRates(), loadDevises()]);
   render();
   seedTickers();
   await processNewCandles(true);
