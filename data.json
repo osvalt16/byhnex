@@ -1,0 +1,185 @@
+{
+ "updatedAt": "2026-09-26T13:52:45.369Z",
+ "coins": [
+  {
+   "short": "BTC",
+   "name": "Bitcoin",
+   "price": 73711.6,
+   "pct24h": 0.231,
+   "rsi": 39.2,
+   "trend": "down",
+   "zone": "neutral"
+  },
+  {
+   "short": "ETH",
+   "name": "Ethereum",
+   "price": 2358.21,
+   "pct24h": -0.173,
+   "rsi": 41.7,
+   "trend": "flat",
+   "zone": "neutral"
+  },
+  {
+   "short": "BNB",
+   "name": "BNB",
+   "price": 678.7,
+   "pct24h": -0.01,
+   "rsi": 43.1,
+   "trend": "down",
+   "zone": "neutral"
+  },
+  {
+   "short": "XRP",
+   "name": "XRP",
+   "price": 1.3524,
+   "pct24h": -2.663,
+   "rsi": 37.6,
+   "trend": "flat",
+   "zone": "neutral"
+  },
+  {
+   "short": "SOL",
+   "name": "Solana",
+   "price": 106.04,
+   "pct24h": 1.493,
+   "rsi": 47.9,
+   "trend": "up",
+   "zone": "neutral"
+  },
+  {
+   "short": "ZEC",
+   "name": "Zcash",
+   "price": 1348.2389108476066,
+   "pct24h": -3.655,
+   "rsi": 46.8,
+   "trend": "down",
+   "zone": "neutral"
+  },
+  {
+   "short": "HYPE",
+   "name": "Hyperliquid",
+   "price": 80.77294685990337,
+   "pct24h": 0.207,
+   "rsi": 48.2,
+   "trend": "down",
+   "zone": "neutral"
+  },
+  {
+   "short": "DOGE",
+   "name": "Dogecoin",
+   "price": 0.08528,
+   "pct24h": -0.49,
+   "rsi": 40.8,
+   "trend": "up",
+   "zone": "neutral"
+  },
+  {
+   "short": "LINK",
+   "name": "Chainlink",
+   "price": 12.555,
+   "pct24h": 2.214,
+   "rsi": 57.1,
+   "trend": "up",
+   "zone": "neutral"
+  },
+  {
+   "short": "ADA",
+   "name": "Cardano",
+   "price": 0.2244,
+   "pct24h": 0.448,
+   "rsi": 46.3,
+   "trend": "up",
+   "zone": "neutral"
+  },
+  {
+   "short": "XLM",
+   "name": "Stellar",
+   "price": 0.1907,
+   "pct24h": -0.935,
+   "rsi": 38.5,
+   "trend": "flat",
+   "zone": "neutral"
+  },
+  {
+   "short": "BCH",
+   "name": "Bitcoin Cash",
+   "price": 292.8,
+   "pct24h": -0.034,
+   "rsi": 22.7,
+   "trend": "flat",
+   "zone": "buy"
+  },
+  {
+   "short": "NEAR",
+   "name": "NEAR Protocol",
+   "price": 4.237,
+   "pct24h": -6.095,
+   "rsi": 38.8,
+   "trend": "up",
+   "zone": "neutral"
+  },
+  {
+   "short": "UNI",
+   "name": "Uniswap",
+   "price": 8.446201141853315,
+   "pct24h": -0.937,
+   "rsi": 49.3,
+   "trend": "up",
+   "zone": "neutral"
+  },
+  {
+   "short": "LTC",
+   "name": "Litecoin",
+   "price": 63.4,
+   "pct24h": 3.781,
+   "rsi": 35.7,
+   "trend": "up",
+   "zone": "neutral"
+  },
+  {
+   "short": "SUI",
+   "name": "Sui",
+   "price": 1.0303,
+   "pct24h": 5.025,
+   "rsi": 49.1,
+   "trend": "up",
+   "zone": "neutral"
+  },
+  {
+   "short": "AVAX",
+   "name": "Avalanche",
+   "price": 9.511,
+   "pct24h": 4.173,
+   "rsi": 48.8,
+   "trend": "up",
+   "zone": "neutral"
+  },
+  {
+   "short": "HBAR",
+   "name": "Hedera",
+   "price": 0.0820026350461133,
+   "pct24h": -0.818,
+   "rsi": 38.4,
+   "trend": "flat",
+   "zone": "neutral"
+  },
+  {
+   "short": "TAO",
+   "name": "Bittensor",
+   "price": 287.57136583223536,
+   "pct24h": 8.375,
+   "rsi": 60.1,
+   "trend": "up",
+   "zone": "neutral"
+  },
+  {
+   "short": "SHIB",
+   "name": "Shiba Inu",
+   "price": 0.00000518,
+   "pct24h": 1.172,
+   "rsi": 45.5,
+   "trend": "up",
+   "zone": "neutral"
+  }
+ ]
+}
