@@ -1,11 +1,11 @@
 # API PHP Byhnex sur OVH PRO
 
-Le front reste sur **https://osvalt16.github.io/byhnex/**. OVH héberge uniquement l’API PHP 8.2, à **https://byhnex.com/api/ai-chat**. Aucun processus Node, Composer, base de données ni installation OpenAI SDK n’est nécessaire sur OVH. L’extension PHP cURL doit être active.
+Le front reste sur **https://osvalt16.github.io/byhnex/**. OVH héberge uniquement l’API PHP 8.2, à **https://byhnex.com/iacrypto/ai-chat.php**. Les fichiers transférés par le propriétaire sont dans `/www/iacrypto`. Le test public du 3 octobre 2026 a confirmé `ready:true` et CORS pour GitHub Pages ; il ne vérifie pas le quota ni la validité de la clé auprès d’OpenAI. Aucun processus Node, Composer, base de données ni installation OpenAI SDK n’est nécessaire sur OVH. L’extension PHP cURL doit être active.
 
 ## Transfert FileZilla
 
 1. Décompressez `byhnex-ovh-api.zip` sur votre ordinateur, ou utilisez le dossier local `ovh-upload`.
-2. Dans FileZilla, ouvrez **`/www` côté serveur**. Envoyez le **dossier `api` complet** depuis `ovh-upload`, y compris les deux fichiers cachés `.htaccess`. Le chemin final doit être `/www/api/ai-chat.php`, pas `/api/ai-chat.php` ni `/www/api/api/ai-chat.php`.
+2. Dans FileZilla, ouvrez **`/www/iacrypto` côté serveur**. Envoyez le **contenu** du dossier `ovh-upload/api` : `ai-chat.php`, `.htaccess` et le dossier `lib` complet, y compris son `.htaccess`. Le chemin final doit être `/www/iacrypto/ai-chat.php`, sans sous-dossier `api` supplémentaire. Le dossier local et l’archive conservent le nom `api` pour le code source.
 3. Conservez votre `.env` existant dans **`/.secrets/.env`**, hors de `/www`. N’envoyez pas le `.env` local dans `/www`.
 
 ```text
@@ -14,7 +14,7 @@ Le front reste sur **https://osvalt16.github.io/byhnex/**. OVH héberge uniqueme
 │   ├── .env               ← déjà présent, privé
 │   └── byhnex-ai-rate.json ← créé automatiquement par PHP
 └── www/
-    └── api/
+    └── iacrypto/
         ├── .htaccess
         ├── ai-chat.php
         └── lib/
@@ -26,7 +26,7 @@ Le front reste sur **https://osvalt16.github.io/byhnex/**. OVH héberge uniqueme
             └── settings.php
 ```
 
-L’archive contient seulement ces huit fichiers de l’API. Elle ne remplace pas le site GitHub ni les autres dossiers du compte OVH. Si un `/www/api/.htaccess` existe déjà et sert une autre application, fusionnez ses règles avec celles fournies avant de remplacer ce fichier. Le dossier `/api` visible à la racine FTP est distinct de `/www/api`.
+L’archive contient seulement ces huit fichiers de l’API. Elle ne remplace pas le site GitHub ni les autres dossiers du compte OVH. Si un `/www/iacrypto/.htaccess` existe déjà et sert une autre application, fusionnez ses règles avec celles fournies avant de remplacer ce fichier. Le dossier `/api` visible à la racine FTP est distinct de `/www/iacrypto`.
 
 ## Configuration privée
 
@@ -43,22 +43,22 @@ Réutilisez les valeurs déjà renseignées. Le code Byhnex est distinct de la c
 
 Dans FileZilla, le propriétaire PHP doit pouvoir lire `.env` et écrire dans `.secrets` pour le limiteur : normalement **`.env` : `0600`**, **`.secrets` : `0700`** lorsque PHP fonctionne sous le propriétaire du compte. Le limiteur crée un fichier privé, verrouillé entre les processus PHP, limitant l’ensemble du chat à six messages par minute. Aucun message ni secret n’est enregistré dans ce fichier.
 
-Le chargeur retrouve le dossier `.secrets` à partir de l’emplacement réel `/www/api/ai-chat.php`. Sur OVH, la racine FTP `/` peut correspondre à `/home/nom-du-compte` sur le système : il ne suppose donc pas que `/.secrets` est nécessairement un chemin absolu système.
+Le chargeur retrouve le dossier `.secrets` à partir de l’emplacement réel `/www/iacrypto/ai-chat.php`. Sur OVH, la racine FTP `/` peut correspondre à `/home/nom-du-compte` sur le système : il ne suppose donc pas que `/.secrets` est nécessairement un chemin absolu système.
 
 ## Vérification et connexion
 
-Ouvrez **https://byhnex.com/api/ai-chat** dans votre navigateur. Ce GET est gratuit et n’appelle pas OpenAI. Le résultat attendu :
+Ouvrez **https://byhnex.com/iacrypto/ai-chat.php** dans votre navigateur. Ce GET est gratuit et n’appelle pas OpenAI. Le résultat attendu :
 
 ```json
 {"ready":true,"accessRequired":true,"supportedAssets":["BTC","SOL"]}
 ```
 
-Sur GitHub Pages : **Assistant IA → Connexion**. L’adresse préconfigurée est `https://byhnex.com/api/ai-chat`. Entrez uniquement la valeur de `BYHNEX_AI_ACCESS_CODE`, jamais la clé OpenAI. Cliquez sur **Vérifier la connexion** puis envoyez un message. La vérification reste gratuite ; l’envoi d’un message utilise l’API OpenAI du propriétaire.
+Sur GitHub Pages : **Assistant IA → Connexion**. L’adresse préconfigurée est `https://byhnex.com/iacrypto/ai-chat.php`. Les anciennes adresses Byhnex `/api/ai-chat` sauvegardées dans le navigateur sont corrigées automatiquement. Entrez uniquement la valeur de `BYHNEX_AI_ACCESS_CODE`, jamais la clé OpenAI. Cliquez sur **Vérifier la connexion** puis envoyez un message. La vérification reste gratuite ; l’envoi d’un message utilise l’API OpenAI du propriétaire.
 
 ## Si cela ne répond pas
 
-- **404 sur les deux adresses `/api/ai-chat` et `/api/ai-chat.php`** : vérifiez le transfert sous `/www/api` et la cible `/www` du domaine dans OVH → Hébergements → Multisite. Dans FileZilla, voir `/www` ne prouve pas que le dossier `api` y a été transféré.
-- **`/api/ai-chat.php` répond mais `/api/ai-chat` est en 404** : transférez `/www/api/.htaccess` avec les fichiers cachés. Si la réécriture est interceptée par une autre application, l’interface accepte aussi `https://byhnex.com/api/ai-chat.php`.
+- **404 sur `/iacrypto/ai-chat.php`** : vérifiez les fichiers sous `/www/iacrypto` et la cible `/www` du domaine dans OVH → Hébergements → Multisite. Les anciennes adresses `/api/ai-chat` peuvent rester en 404 : elles ne sont plus utilisées.
+- **La réécriture `/iacrypto/ai-chat` ne répond pas** : l’adresse configurée utilise directement `ai-chat.php`, sans dépendre de la réécriture. Conservez les `.htaccess` pour protéger le dossier `lib` et transmettre Authorization à PHP-FPM.
 - **`ready:false`** : vérifiez les quatre variables, la lecture du fichier privé, l’extension cURL, les droits d’écriture du dossier `.secrets` et PHP 8.2 dans le panneau OVH. Le GET n’affiche jamais les valeurs privées.
 - **Code incorrect / 401** : utilisez `BYHNEX_AI_ACCESS_CODE`. `.htaccess` transmet le header Authorization à PHP-FPM.
 - **Connexion bloquée depuis GitHub** : l’origine doit être exactement `https://osvalt16.github.io`. La réponse doit contenir `Access-Control-Allow-Origin` correspondant. Vérifiez également le certificat HTTPS du domaine.

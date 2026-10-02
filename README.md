@@ -40,6 +40,6 @@ https://osvalt16.github.io/byhnex/ — dépôt `osvalt16/byhnex`, branche `main`
 `prepare-deployment.js` copie seulement les fichiers publics dans le clone `pages-repository`. Il vérifie que les scripts métier des autres outils n’ont pas changé ; le tableau portefeuille est volontairement modifié pour les valeurs éditables. Le serveur local, profils Chrome, PDF extraits et tests ne sont pas publiés.
 
 ## Assistant IA
-Assistant BTC/SOL accessible depuis la sidebar ou le bouton flottant. Le chat réutilise les bougies et le portefeuille virtuel, conserve la session et propose des repères graphiques. Le front reste sur GitHub Pages ; l’API PHP 8.2 est prévue pour OVH PRO à https://byhnex.com/api/ai-chat. Les secrets restent dans /.secrets/.env, hors de /www. Transfert et connexion : [OVH_SETUP.md](OVH_SETUP.md). L’API devient active après le transfert du dossier PHP.
+Assistant BTC/SOL accessible depuis la sidebar ou le bouton flottant. Le chat réutilise les bougies et le portefeuille virtuel, conserve la session et propose des repères graphiques. Le front reste sur GitHub Pages ; l’API PHP 8.2 est prévue pour OVH PRO à https://byhnex.com/iacrypto/ai-chat.php. Les secrets restent dans /.secrets/.env, hors de /www. Transfert et connexion : [OVH_SETUP.md](OVH_SETUP.md). Le test public confirme que la configuration PHP est chargée ; les messages nécessitent le code d’accès Byhnex.
 
 Les tests JavaScript et PHP utilisent des réponses OpenAI simulées, sans appel payant. Aucun serveur PHP ni .env n’est publié sur Pages.

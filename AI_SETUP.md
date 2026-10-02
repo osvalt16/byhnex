@@ -1,6 +1,6 @@
 # Activer l’Assistant IA Byhnex
 
-L’interface reste sur GitHub Pages. **Le serveur de production choisi est OVHcloud Web Hosting PRO, PHP 8.2**, avec les secrets existants dans `/.secrets/.env`. Transfert sous `/www/api/`, test gratuit et connexion : **[OVH_SETUP.md](OVH_SETUP.md)**. L’adresse préconfigurée est `https://byhnex.com/api/ai-chat` ; elle fonctionne après le transfert des fichiers PHP. Le serveur appelle `POST https://api.openai.com/v1/responses`. Le projet existant est en JavaScript natif, sans Vue/Vite ; ses modules de marché, sa sauvegarde et son graphique sont réutilisés.
+L’interface reste sur GitHub Pages. **Le serveur de production choisi est OVHcloud Web Hosting PRO, PHP 8.2**, avec les secrets existants dans `/.secrets/.env`. Transfert sous `/www/iacrypto/`, test gratuit et connexion : **[OVH_SETUP.md](OVH_SETUP.md)**. L’adresse préconfigurée est `https://byhnex.com/iacrypto/ai-chat.php` ; le test public confirme que la configuration PHP est chargée. Le serveur appelle `POST https://api.openai.com/v1/responses`. Le projet existant est en JavaScript natif, sans Vue/Vite ; ses modules de marché, sa sauvegarde et son graphique sont réutilisés.
 
 ## Variables serveur
 

@@ -7,16 +7,17 @@ export function validEndpoint(value){
   const url=new URL(value,location.href),local=['localhost','127.0.0.1'].includes(url.hostname);
   if(url.username||url.password||url.search||url.hash||!(url.protocol==='https:'||local&&url.protocol==='http:'))throw Error('Indiquez une URL HTTPS de serveur, sans clé ni paramètres.');
   if(url.hostname==='api.openai.com')throw Error('Indiquez votre serveur Byhnex, qui protège la clé OpenAI.');
-  if(url.pathname==='/')url.pathname='/api/ai-chat';
-  if(!url.pathname.endsWith('/api/ai-chat')&&!url.pathname.endsWith('/api/ai-chat.php')&&!url.pathname.endsWith('/.netlify/functions/ai-chat'))throw Error('L’adresse doit se terminer par /api/ai-chat ou /api/ai-chat.php.');
+  if(url.pathname==='/')url.pathname=url.hostname==='byhnex.com'?'/iacrypto/ai-chat.php':'/api/ai-chat';
+  if(!['/api/ai-chat','/api/ai-chat.php','/iacrypto/ai-chat','/iacrypto/ai-chat.php','/.netlify/functions/ai-chat'].some(path=>url.pathname.endsWith(path)))throw Error('Indiquez l’adresse du chat sur votre serveur, par exemple https://byhnex.com/iacrypto/ai-chat.php.');
   return url.href;
 }
 export async function getEndpoint(){
   if(configuredEndpoint!==null)return configuredEndpoint;
   let stored='';try{stored=localStorage.getItem('byhnex-ai-endpoint')||'';}catch{}
+  if(['https://byhnex.com/api/ai-chat','https://byhnex.com/api/ai-chat.php'].includes(stored)){stored='https://byhnex.com/iacrypto/ai-chat.php';try{localStorage.setItem('byhnex-ai-endpoint',stored);}catch{}}
   if(stored)return configuredEndpoint=validEndpoint(stored);
   if(['localhost','127.0.0.1'].includes(location.hostname))return configuredEndpoint=new URL('/api/ai-chat',location.href).href;
-  try{const response=await fetch('ai-config.json?v=20261003-ovh',{signal:AbortSignal.timeout(5000)});if(response.ok){const data=await response.json();return configuredEndpoint=validEndpoint(data.endpoint);}}catch{}
+  try{const response=await fetch('ai-config.json?v=20261003-ovh-live',{signal:AbortSignal.timeout(5000)});if(response.ok){const data=await response.json();return configuredEndpoint=validEndpoint(data.endpoint);}}catch{}
   return configuredEndpoint='';
 }
 export function setEndpoint(url){configuredEndpoint=validEndpoint(url);try{if(configuredEndpoint)localStorage.setItem('byhnex-ai-endpoint',configuredEndpoint);else localStorage.removeItem('byhnex-ai-endpoint');}catch{}return configuredEndpoint;}

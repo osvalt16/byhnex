@@ -1,5 +1,5 @@
 import {AiStore} from './ai-store.js?v=20261003-ovh';
-import {sendAiMessage,checkConnection,getEndpoint,setEndpoint,setAccessCode} from './ai-service.js?v=20261003-ovh';
+import {sendAiMessage,checkConnection,getEndpoint,setEndpoint,setAccessCode} from './ai-service.js?v=20261003-ovh-live';
 import {buildAiContext,savedPortfolio} from './ai-context.js?v=20261003-ovh';
 import {AI_ASSETS} from './ai-contract.js?v=20261003-ovh';
 
