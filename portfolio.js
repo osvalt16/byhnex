@@ -1,0 +1,2 @@
+export function quantityFromValue(value,price){if(!Number.isFinite(value)||value<0||!Number.isFinite(price)||price<=0)throw Error('Valeur ou cours invalide.');return value/price;}
+export function reserveFromTotal(total,positions){if(!Number.isFinite(total)||total<0||!Number.isFinite(positions)||positions<0||total+1e-8<positions)throw Error('Le capital total doit couvrir les positions. Réduisez leur valeur ou augmentez le capital.');return Math.max(0,total-positions);}

@@ -8,13 +8,13 @@
 window.Devises = (function () {
   const KEY = 'byhnex-devise';
   const MAJORS = ['EUR', 'USD', 'GBP', 'CHF', 'CAD', 'JPY', 'AUD'];
-  let rates = { EUR: 1, USD: 1.16 };          // repli si le reseau est indisponible
+  let rates = { EUR: 1 }; let ratesTimestamp=0, ratesLive=false;try{const cached=JSON.parse(localStorage.getItem('byhnex-fx-cache'));if(cached&&Date.now()-cached.savedAt<172800000&&cached.rates?.USD>0){rates=cached.rates;ratesTimestamp=cached.timestamp;}}catch{} // No invented exchange rate.          // repli si le reseau est indisponible
   let code = localStorage.getItem(KEY) || 'EUR';
   const listeners = [];
 
   const rate = () => rates[code] || 1;
   const fromEur = v => v * rate();
-  const fromUsd = v => rates.USD ? v / rates.USD * rate() : v;
+  const fromUsd = v => rates.USD ? v / rates.USD * rate() : code==='USD'?v:NaN;
 
   function format(v, digits) {
     if (v === null || v === undefined || isNaN(v)) return '—';
@@ -50,8 +50,8 @@ window.Devises = (function () {
     try {
       const r = await fetch('https://open.er-api.com/v6/latest/EUR');
       const j = await r.json();
-      if (j && j.rates) rates = Object.assign({ EUR: 1 }, j.rates);
-    } catch (e) { console.warn('taux de change indisponibles, repli EUR/USD', e); }
+      if (j && j.rates && j.rates.USD>0){rates=Object.assign({EUR:1},j.rates);ratesTimestamp=Number(j.time_last_update_unix)*1000||Date.now();ratesLive=true;try{localStorage.setItem('byhnex-fx-cache',JSON.stringify({rates,timestamp:ratesTimestamp,savedAt:Date.now()}));}catch{}}else throw Error('Taux indisponibles');
+    } catch (e) { console.warn('Taux de change indisponibles : cache daté ou conversion désactivée.', e); }
     if (!rates[code]) code = 'EUR';
   }
 
@@ -61,7 +61,7 @@ window.Devises = (function () {
     sel.innerHTML =
       '<optgroup label="Principales">' + MAJORS.filter(c => rates[c]).map(c => '<option value="' + c + '">' + c + '</option>').join('') + '</optgroup>' +
       '<optgroup label="Toutes les devises">' + autres.map(c => '<option value="' + c + '">' + c + '</option>').join('') + '</optgroup>';
-    sel.value = code;
+    sel.value = code;sel.title=ratesTimestamp?(ratesLive?'Taux source du ':'Taux en cache du ')+new Date(ratesTimestamp).toLocaleString('fr-FR'):'Conversion indisponible : aucun taux réel reçu';
     sel.addEventListener('change', () => {
       code = sel.value;
       localStorage.setItem(KEY, code);
@@ -80,7 +80,7 @@ window.Devises = (function () {
     onChange(fn) { listeners.push(fn); },
     get code() { return code; },
     /* taux dollar par euro : utile aux pages qui raisonnent en dollars */
-    get usdPerEur() { return rates.USD || 1.16; },
+    get usdPerEur() { return rates.USD || NaN; },
     symbol,
     /* montant fourni en euros */
     conv: fromEur,
