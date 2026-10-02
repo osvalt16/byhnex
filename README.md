@@ -40,6 +40,6 @@ https://osvalt16.github.io/byhnex/ — dépôt `osvalt16/byhnex`, branche `main`
 `prepare-deployment.js` copie seulement les fichiers publics dans le clone `pages-repository`. Il vérifie que les scripts métier des autres outils n’ont pas changé ; le tableau portefeuille est volontairement modifié pour les valeurs éditables. Le serveur local, profils Chrome, PDF extraits et tests ne sont pas publiés.
 
 ## Assistant IA
-Assistant BTC/SOL accessible depuis la sidebar ou le bouton flottant. Le chat r?utilise les bougies et le portefeuille virtuel, conserve la session et propose des rep?res graphiques. La fonction Cloudflare Workers appelle Responses c?t? serveur ; aucune cl? n?est publi?e. La connexion r?elle reste ? activer avec le compte et la cl? du propri?taire. Variables et d?ploiement : [AI_SETUP.md](AI_SETUP.md).
+Assistant BTC/SOL accessible depuis la sidebar ou le bouton flottant. Le chat réutilise les bougies et le portefeuille virtuel, conserve la session et propose des repères graphiques. Le front reste sur GitHub Pages ; l’API PHP 8.2 est prévue pour OVH PRO à https://byhnex.com/api/ai-chat. Les secrets restent dans /.secrets/.env, hors de /www. Transfert et connexion : [OVH_SETUP.md](OVH_SETUP.md). L’API devient active après le transfert du dossier PHP.
 
-`browser-ai-check.mjs` couvre le contexte r?el, l?historique, les erreurs et les actions avec des r?ponses API simul?es ; aucun appel OpenAI payant n?est effectu? par les tests.
+Les tests JavaScript et PHP utilisent des réponses OpenAI simulées, sans appel payant. Aucun serveur PHP ni .env n’est publié sur Pages.

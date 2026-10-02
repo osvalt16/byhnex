@@ -1,5 +1,5 @@
-import { validateAction, AI_ASSETS } from './ai-contract.js?v=20261002-ai';
-import { FIB_LEVELS } from './chart-utils.js?v=20261002-ai';
+import { validateAction, AI_ASSETS } from './ai-contract.js?v=20261003-ovh';
+import { FIB_LEVELS } from './chart-utils.js?v=20261003-ovh';
 
 export function applyVisualActions(drawings, actions, { asset, candles = [], createId = () => crypto.randomUUID() } = {}) {
   if (!AI_ASSETS.includes(asset)) throw Error('Choisissez le graphique BTC ou SOL.');

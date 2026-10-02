@@ -1,19 +1,19 @@
 # Activer l’Assistant IA Byhnex
 
-L’interface reste sur GitHub Pages. Le serveur appelle `POST https://api.openai.com/v1/responses`. La fonction serverless est un Cloudflare Worker séparé, accessible sur `/api/ai-chat`. Le projet existant est en JavaScript natif, sans Vue/Vite ; ses modules de marché, sa sauvegarde et son graphique sont réutilisés.
+L’interface reste sur GitHub Pages. **Le serveur de production choisi est OVHcloud Web Hosting PRO, PHP 8.2**, avec les secrets existants dans `/.secrets/.env`. Transfert sous `/www/api/`, test gratuit et connexion : **[OVH_SETUP.md](OVH_SETUP.md)**. L’adresse préconfigurée est `https://byhnex.com/api/ai-chat` ; elle fonctionne après le transfert des fichiers PHP. Le serveur appelle `POST https://api.openai.com/v1/responses`. Le projet existant est en JavaScript natif, sans Vue/Vite ; ses modules de marché, sa sauvegarde et son graphique sont réutilisés.
 
 ## Variables serveur
 
 | Variable | Valeur | Stockage |
 | --- | --- | --- |
-| `OPENAI_API_KEY` | Clé API du projet OpenAI | Secret Cloudflare, jamais Git/front |
+| `OPENAI_API_KEY` | Clé API du projet OpenAI | `.secrets/.env` sur OVH, jamais Git/front |
 | `OPENAI_MODEL` | Exemple : `gpt-5.4-mini`, modèle compatible Responses, Structured Outputs et outils | Variable serveur, modifiable sans changer le code |
-| `BYHNEX_AI_ACCESS_CODE` | Code privé de 16 caractères minimum, distinct de la clé OpenAI | Secret Cloudflare |
+| `BYHNEX_AI_ACCESS_CODE` | Code privé de 16 caractères minimum, distinct de la clé OpenAI | `.secrets/.env` sur OVH |
 | `ALLOWED_ORIGINS` | `https://osvalt16.github.io` et, si besoin, origines locales séparées par virgules | Variable serveur |
 
-Le code d’accès protège l’API publique. CORS ne constitue pas à lui seul une authentification. Le binding `AI_RATE_LIMITER` limite le chat à 6 requêtes/minute et est configuré dans `wrangler.jsonc`. Cette limite n’est pas un plafond de facturation.
+Le code d’accès protège l’API publique. CORS ne constitue pas à lui seul une authentification. Sur OVH, un fichier privé avec verrou PHP limite le chat à 6 requêtes/minute. Sur Cloudflare, le binding `AI_RATE_LIMITER` remplit ce rôle. Cette limite n’est pas un plafond de facturation.
 
-## Cloudflare Workers
+## Alternative : Cloudflare Workers
 
 Depuis le clone du dépôt, avec Node 24 et un compte Cloudflare :
 

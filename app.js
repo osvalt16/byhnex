@@ -1,9 +1,9 @@
-import {simulate,comparison} from './strategy.js?v=20261002-ai';
-import {FIB_LEVELS,parseFibLevels,ema,fibPrice} from './chart-utils.js?v=20261002-ai';
-import {ASSETS,LiveMarket} from './market-data.js?v=20261002-ai';
-import {quantityFromValue,reserveFromTotal} from './portfolio.js?v=20261002-ai';
-import {buildAiContext} from './ai-context.js?v=20261002-ai';
-import {applyVisualActions} from './ai-actions.js?v=20261002-ai';
+import {simulate,comparison} from './strategy.js?v=20261003-ovh';
+import {FIB_LEVELS,parseFibLevels,ema,fibPrice} from './chart-utils.js?v=20261003-ovh';
+import {ASSETS,LiveMarket} from './market-data.js?v=20261003-ovh';
+import {quantityFromValue,reserveFromTotal} from './portfolio.js?v=20261003-ovh';
+import {buildAiContext} from './ai-context.js?v=20261003-ovh';
+import {applyVisualActions} from './ai-actions.js?v=20261003-ovh';
 export const market=new LiveMarket();
 const $=id=>document.getElementById(id), prices=Object.fromEntries(ASSETS.map(a=>[a,NaN])), names={SOL:'Solana',BTC:'Bitcoin',DOGE:'Dogecoin',ZEC:'Zcash'},icons={SOL:'≋',BTC:'₿',DOGE:'Ð',ZEC:'ⓩ'}, esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const usd=n=>Number.isFinite(n)?new Intl.NumberFormat('fr-FR',{style:'currency',currency:'USD',maximumFractionDigits:n>0&&n<1?5:2}).format(n).replace(/\$US|US\$/,market.quote==='USDT'?'USDT':'$US'):'—',tok=(n,a=state.asset)=>new Intl.NumberFormat('fr-FR',{maximumFractionDigits:a==='BTC'?8:4}).format(n),num=id=>Number($(id).value);

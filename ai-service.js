@@ -1,4 +1,4 @@
-import { validateReply } from './ai-contract.js?v=20261002-ai';
+import { validateReply } from './ai-contract.js?v=20261003-ovh';
 let accessCode='', configuredEndpoint=null;
 export function setAccessCode(code){if(code.startsWith('sk-'))throw Error('Utilisez le code d’accès Byhnex, jamais une clé OpenAI dans cette interface.');accessCode=code;}
 export function validEndpoint(value){
@@ -8,7 +8,7 @@ export function validEndpoint(value){
   if(url.username||url.password||url.search||url.hash||!(url.protocol==='https:'||local&&url.protocol==='http:'))throw Error('Indiquez une URL HTTPS de serveur, sans clé ni paramètres.');
   if(url.hostname==='api.openai.com')throw Error('Indiquez votre serveur Byhnex, qui protège la clé OpenAI.');
   if(url.pathname==='/')url.pathname='/api/ai-chat';
-  if(!url.pathname.endsWith('/api/ai-chat')&&!url.pathname.endsWith('/.netlify/functions/ai-chat'))throw Error('L’adresse doit se terminer par /api/ai-chat.');
+  if(!url.pathname.endsWith('/api/ai-chat')&&!url.pathname.endsWith('/api/ai-chat.php')&&!url.pathname.endsWith('/.netlify/functions/ai-chat'))throw Error('L’adresse doit se terminer par /api/ai-chat ou /api/ai-chat.php.');
   return url.href;
 }
 export async function getEndpoint(){
@@ -16,7 +16,7 @@ export async function getEndpoint(){
   let stored='';try{stored=localStorage.getItem('byhnex-ai-endpoint')||'';}catch{}
   if(stored)return configuredEndpoint=validEndpoint(stored);
   if(['localhost','127.0.0.1'].includes(location.hostname))return configuredEndpoint=new URL('/api/ai-chat',location.href).href;
-  try{const response=await fetch('ai-config.json?v=20261002-ai',{signal:AbortSignal.timeout(5000)});if(response.ok){const data=await response.json();return configuredEndpoint=validEndpoint(data.endpoint);}}catch{}
+  try{const response=await fetch('ai-config.json?v=20261003-ovh',{signal:AbortSignal.timeout(5000)});if(response.ok){const data=await response.json();return configuredEndpoint=validEndpoint(data.endpoint);}}catch{}
   return configuredEndpoint='';
 }
 export function setEndpoint(url){configuredEndpoint=validEndpoint(url);try{if(configuredEndpoint)localStorage.setItem('byhnex-ai-endpoint',configuredEndpoint);else localStorage.removeItem('byhnex-ai-endpoint');}catch{}return configuredEndpoint;}

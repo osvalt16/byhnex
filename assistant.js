@@ -1,7 +1,7 @@
-import {AiStore} from './ai-store.js?v=20261002-ai';
-import {sendAiMessage,checkConnection,getEndpoint,setEndpoint,setAccessCode} from './ai-service.js?v=20261002-ai';
-import {buildAiContext,savedPortfolio} from './ai-context.js?v=20261002-ai';
-import {AI_ASSETS} from './ai-contract.js?v=20261002-ai';
+import {AiStore} from './ai-store.js?v=20261003-ovh';
+import {sendAiMessage,checkConnection,getEndpoint,setEndpoint,setAccessCode} from './ai-service.js?v=20261003-ovh';
+import {buildAiContext,savedPortfolio} from './ai-context.js?v=20261003-ovh';
+import {AI_ASSETS} from './ai-contract.js?v=20261003-ovh';
 
 if(!document.body.classList.contains('embed'))mountAssistant();
 function mountAssistant(){

@@ -1,0 +1,7 @@
+Options -Indexes -MultiViews
+SetEnvIf Authorization "(.+)" HTTP_AUTHORIZATION=$1
+RewriteEngine On
+RewriteRule ^ai-chat/?$ ai-chat.php [END]
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>

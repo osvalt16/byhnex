@@ -1,4 +1,4 @@
-import { AI_ASSETS } from './ai-contract.js?v=20261002-ai';
+import { AI_ASSETS } from './ai-contract.js?v=20261003-ovh';
 const numeric = x => typeof x === 'number' && Number.isFinite(x) ? x : null;
 export function savedPortfolio(storage = globalThis.localStorage) {
   try { return JSON.parse(storage.getItem('cryptonite-v1')) || {}; } catch { return {}; }
