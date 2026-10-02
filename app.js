@@ -1,4 +1,4 @@
-import {simulate,comparison} from './strategy.js?v=20261002-chart';
+﻿import {simulate,comparison} from './strategy.js?v=20261002-chart';
 import {FIB_LEVELS,parseFibLevels,ema,fibPrice} from './chart-utils.js?v=20261002-chart';
 import {ASSETS,LiveMarket} from './market-data.js?v=20261002-chart';
 import {quantityFromValue,reserveFromTotal} from './portfolio.js?v=20261002-chart';
@@ -42,7 +42,7 @@ function renderChart(){
   const timeAt=px=>{const index=(px-left)/step-.5,i=Math.max(0,Math.min(data.length-2,Math.floor(index))),c=data[i],next=data[i+1];return c.time+(index-i)*(next?next.time-c.time:tfMs[state.tf]);};
   const timeX=t=>{let low=0,high=data.length-1;while(low<high){const mid=Math.floor((low+high)/2);if(data[mid].time<t)low=mid+1;else high=mid;}const i=t<data[0].time?0:Math.max(0,low-1),c=data[i],next=data[i+1];return x(i)+(t-c.time)/(next?next.time-c.time:tfMs[state.tf])*step;};
   geometry={min,max,left,right,top,bottom,volumeBottom,step,x,y,priceAt,timeAt,timeX,data,first};
-  let s=`<defs><clipPath id="plot"><rect x="${left}" y="${top}" width="${right-left}" height="${volumeBottom-top}"/></clipPath><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#00b79d" stop-opacity=".25"/><stop offset="1" stop-color="#00b79d" stop-opacity="0"/></linearGradient></defs>`;
+  let s=`<defs><clipPath id="plot"><rect x="${left}" y="${top}" width="${right-left}" height="${volumeBottom-top}"/></clipPath><clipPath id="price-plot"><rect x="${left}" y="${top}" width="${right-left}" height="${bottom-top}"/></clipPath><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#00b79d" stop-opacity=".25"/><stop offset="1" stop-color="#00b79d" stop-opacity="0"/></linearGradient></defs>`;
   for(let i=0;i<7;i++){const p=min+(max-min)*i/6,py=y(p);s+=`<line x1="${left}" x2="${right}" y1="${py}" y2="${py}" stroke="#202735"/><text x="${right+10}" y="${py+4}" fill="#8e99ab" font-size="10">${esc(usd(p))}</text>`;}
   const ticks=Math.max(3,Math.min(9,Math.floor((right-left)/100)));
   for(let i=0;i<ticks;i++){const j=Math.min(data.length-1,Math.floor(i*(data.length-1)/(ticks-1))),px=x(j),date=new Date(data[j].time),label=state.tf.includes('m')||((state.tf==='1H'||state.tf==='4H')&&data.at(-1).time-data[0].time<86400000)?date.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'}):date.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',timeZone:'UTC'});s+=`<line x1="${px}" x2="${px}" y1="${top}" y2="${volumeBottom}" stroke="#202735"/><text x="${px}" y="${height-13}" fill="#8e99ab" font-size="10" text-anchor="middle">${label}</text>`;}
@@ -52,6 +52,7 @@ function renderChart(){
   if(view==='line'||view==='area'){if(view==='area')s+=`<path d="${path} L${x(data.length-1)},${bottom} L${x(0)},${bottom}Z" fill="url(#areaFill)"/>`;s+=`<path d="${path}" fill="none" stroke="#00c7aa" stroke-width="1.8"/>`;}
   data.forEach((c,i)=>{const px=x(i),color=c.close>=c.open?'#00b79d':'#f23645',w=Math.max(1,step*.65);if(view==='candle')s+=`<line x1="${px}" x2="${px}" y1="${y(c.high)}" y2="${y(c.low)}" stroke="${color}"/><rect x="${px-w/2}" y="${Math.min(y(c.open),y(c.close))}" width="${w}" height="${Math.max(1,Math.abs(y(c.open)-y(c.close)))}" fill="${color}"/>`;if(view==='ohlc')s+=`<path d="M${px},${y(c.high)}V${y(c.low)} M${px-w/2},${y(c.open)}H${px} M${px},${y(c.close)}H${px+w/2}" stroke="${color}" fill="none"/>`;if(options.volume)s+=`<rect x="${px-w/2}" y="${volumeBottom-c.volume/maxVolume*45}" width="${w}" height="${c.volume/maxVolume*45}" fill="${color}" opacity=".36"/>`;});
   for(const [values,color,key] of [[ema20,'#e9b46b','ema20'],[ema50,'#a49aff','ema50']])if(values.length)s+=`<path data-indicator="${key}" d="${values.map((v,i)=>(i?'L':'M')+x(i)+','+y(v)).join(' ')}" fill="none" stroke="${color}" stroke-width="1.5"/>`;
+  s+='<g clip-path="url(#price-plot)">';
   const line=(p,label,color,id)=>`<g data-line="${id}"><line x1="${left}" x2="${right}" y1="${y(p)}" y2="${y(p)}" stroke="${color}" stroke-dasharray="5 5"/><line x1="${left}" x2="${right}" y1="${y(p)}" y2="${y(p)}" stroke="transparent" stroke-width="13" style="cursor:ns-resize"/><rect x="${right-149}" y="${y(p)-10}" width="145" height="19" rx="3" fill="#1d262d" stroke="${color}" stroke-opacity=".5"/><text x="${right-141}" y="${y(p)+3}" fill="${color}" font-size="9">${esc(label)}</text></g>`;
   if(valid){s+=line(sell,'VENTE · '+usd(sell),'#d4b887','sell');[5,10,15,20].forEach(c=>s+=line(sell*(1-c/100),'−'+c+' % · '+usd(sell*(1-c/100)),Math.abs(correction-c)<.2?'#a6e8bb':'#788e80','buy-'+c));if(computed)s+=`<line x1="${left}" x2="${right}" y1="${y(computed.breakEven)}" y2="${y(computed.breakEven)}" stroke="#808b9c" stroke-dasharray="2 7"/>`;}
   if(average>0)s+=`<line x1="${left}" x2="${right}" y1="${y(average)}" y2="${y(average)}" stroke="#8e83af" stroke-dasharray="3 6"/><text x="${left+8}" y="${y(average)-6}" fill="#a89abd" font-size="10">Prix moyen ${esc(usd(average))}</text>`;
@@ -73,7 +74,7 @@ function renderChart(){
   }
   state.drawings.filter(d=>d.asset===state.asset&&d.visible!==false).forEach(d=>s+=drawObject(d));
   if(pending){s+=`<circle cx="${timeX(pending.time)}" cy="${y(pending.price)}" r="4" fill="#00c7aa"/>`;if(hoveredPoint)s+=drawObject({type:tool,t1:pending.time,p1:pending.price,t2:timeAt(hoveredPoint.x),p2:priceAt(hoveredPoint.y),fib:{custom:options.fibCustom,levels:options.fibLevels,extend:options.fibExtend,reverse:options.fibReverse,color:options.fibColor}},true);}
-  s+='</g>';
+  s+='</g></g>';
   const current=data.at(-1).close,py=y(current);s+=`<line x1="${left}" x2="${right}" y1="${py}" y2="${py}" stroke="#00b79d" stroke-dasharray="2 3"/><rect x="${right+4}" y="${py-10}" width="${width-right-8}" height="21" rx="2" fill="#009e87"/><text x="${right+9}" y="${py+4}" fill="white" font-size="10">${esc(usd(current))}</text><g id="crosshair"></g>`;
   svg.innerHTML=s;$('drawing-count').textContent=state.drawings.filter(d=>d.asset===state.asset).length;
   $('indicator-legend').innerHTML=(options.volume?'<span>Volume</span>':'')+(options.ema20?'<span class="ema20-key">EMA 20</span>':'')+(options.ema50?'<span class="ema50-key">EMA 50</span>':'');
