@@ -1,0 +1,11 @@
+{
+  "name": "byhnex",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "build": "node build-pages.js",
+    "test": "node --test ai.test.js chart-utils.test.js market-data.test.js portfolio.test.js strategy.test.js"
+  }
+}
