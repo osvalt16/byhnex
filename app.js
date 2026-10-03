@@ -68,10 +68,9 @@ function drawChart(){
   const last=Math.max(1,all.length-offset),first=Math.max(0,last-Math.min(zoom,all.length)),data=all.slice(first,last);
   svg.dataset.visibleFrom=String(data[0].time);svg.dataset.visibleTo=String(data.at(-1).time);svg.dataset.visibleCount=String(data.length);
   viewportRightTime=offset>0?data.at(-1).time:null;
-  const sell=num('sell'),valid=overlays&&Number.isFinite(sell)&&sell>0,levels=[...(valid?[sell,...options.strategyLevels.map(c=>strategyPrice(sell,c))]:[]),...(aiFocusPrice>0?[aiFocusPrice]:[])],holding=state.holdings[state.asset];
+  const sell=num('sell'),valid=overlays&&Number.isFinite(sell)&&sell>0,endPercent=options.strategyLevels.at(-1),endPrice=valid?strategyPrice(sell,endPercent):null,levels=[...(valid?[sell,endPrice]:[]),...(aiFocusPrice>0?[aiFocusPrice]:[])];
   const ema20=options.ema20?ema(all,20).slice(first,last):[],ema50=options.ema50?ema(all,50).slice(first,last):[];
-  const average=overlays&&holding.quantity>0?holding.average:0;
-  let min=Math.min(...data.map(c=>c.low),...levels,...ema20,...ema50,...(average>0?[average]:[])),max=Math.max(...data.map(c=>c.high),...levels,...ema20,...ema50,average);
+  let min=Math.min(...data.map(c=>c.low),...levels,...ema20,...ema50),max=Math.max(...data.map(c=>c.high),...levels,...ema20,...ema50);
   const pad=(max-min)*.09||Math.max(max*.01,.000001);min=Math.max(min-pad,min>0?min*.5:min-pad);max+=pad;
   if(pinnedRange){min=pinnedRange.min;max=pinnedRange.max;}else if(drag){min=drag.geometry.min;max=drag.geometry.max;}
   const left=12,right=width-(width<500?91:114),top=20,volumeBottom=height-38,bottom=options.volume?volumeBottom-65:volumeBottom-6;
@@ -80,7 +79,7 @@ function drawChart(){
   const timeAt=px=>{const index=(px-left)/step-.5,i=Math.max(0,Math.min(data.length-2,Math.floor(index))),c=data[i],next=data[i+1];return c.time+(index-i)*(next?next.time-c.time:tfMs[state.tf]);};
   const timeX=t=>{let low=0,high=data.length-1;while(low<high){const mid=Math.floor((low+high)/2);if(data[mid].time<t)low=mid+1;else high=mid;}const i=t<data[0].time?0:Math.max(0,low-1),c=data[i],next=data[i+1];return x(i)+(t-c.time)/(next?next.time-c.time:tfMs[state.tf])*step;};
   geometry={min,max,left,right,top,bottom,volumeBottom,step,x,y,priceAt,timeAt,timeX,data,first};
-  const anchorTime=state.settings[state.asset].strategyTime??data[Math.floor(data.length*.35)].time,anchorX=Math.max(left+12,Math.min(right-22,timeX(anchorTime))),strategyLeft=anchorX;
+  const anchorTime=state.settings[state.asset].strategyTime??data[Math.floor(data.length*.35)].time,anchorX=Math.max(left+12,Math.min(right-68,timeX(anchorTime))),strategyLeft=anchorX;
   let s=`<defs><clipPath id="plot"><rect x="${left}" y="${top}" width="${right-left}" height="${volumeBottom-top}"/></clipPath><clipPath id="price-plot"><rect x="${left}" y="${top}" width="${right-left}" height="${bottom-top}"/></clipPath><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#00b79d" stop-opacity=".25"/><stop offset="1" stop-color="#00b79d" stop-opacity="0"/></linearGradient></defs>`;
   for(let i=0;i<7;i++){const p=min+(max-min)*i/6,py=y(p);s+=`<line x1="${left}" x2="${right}" y1="${py}" y2="${py}" stroke="#202735"/><text x="${right+10}" y="${py+4}" fill="#8e99ab" font-size="10">${esc(usd(p))}</text>`;}
   const ticks=Math.max(3,Math.min(9,Math.floor((right-left)/100)));
@@ -91,18 +90,15 @@ function drawChart(){
   data.forEach((c,i)=>{const px=x(i),color=c.close>=c.open?'#00b79d':'#f23645',w=Math.max(1,step*.65);if(view==='candle')s+=`<line x1="${px}" x2="${px}" y1="${y(c.high)}" y2="${y(c.low)}" stroke="${color}"/><rect x="${px-w/2}" y="${Math.min(y(c.open),y(c.close))}" width="${w}" height="${Math.max(1,Math.abs(y(c.open)-y(c.close)))}" fill="${color}"/>`;if(view==='ohlc')s+=`<path d="M${px},${y(c.high)}V${y(c.low)} M${px-w/2},${y(c.open)}H${px} M${px},${y(c.close)}H${px+w/2}" stroke="${color}" fill="none"/>`;if(options.volume)s+=`<rect x="${px-w/2}" y="${volumeBottom-c.volume/maxVolume*45}" width="${w}" height="${c.volume/maxVolume*45}" fill="${color}" opacity=".36"/>`;});
   for(const [values,color,key] of [[ema20,'#e9b46b','ema20'],[ema50,'#a49aff','ema50']])if(values.length)s+=`<path data-indicator="${key}" d="${values.map((v,i)=>(i?'L':'M')+x(i)+','+y(v)).join(' ')}" fill="none" stroke="${color}" stroke-width="1.5"/>`;
   s+='<g clip-path="url(#price-plot)">';
-  const line=(p,label,color,id,percent)=>`<g data-line="${id}" data-price="${p}" data-percent="${percent}" style="cursor:${id==='sell'?'move':'ns-resize'}"><line x1="${strategyLeft}" x2="${right}" y1="${y(p)}" y2="${y(p)}" stroke="${color}" stroke-dasharray="${id==='sell'?'none':'5 5'}" stroke-width="${id==='sell'?1.5:1}"/><line x1="${strategyLeft}" x2="${right}" y1="${y(p)}" y2="${y(p)}" stroke="transparent" stroke-width="18"/><rect x="${right-158}" y="${y(p)-10}" width="154" height="20" rx="4" fill="#15252b" stroke="${color}" stroke-opacity=".6"/><text x="${right-151}" y="${y(p)+4}" fill="${color}" font-size="10">${esc(label)}</text><circle cx="${anchorX}" cy="${y(p)}" r="${id==='sell'?6:4}" fill="#0e1420" stroke="${color}" stroke-width="2"/><circle cx="${anchorX}" cy="${y(p)}" r="14" fill="transparent"/></g>`;
+  const line=(p,color,id,percent,priceDrop)=>{
+    const origin=percent===0,py=y(p),badgeY=Math.max(top+1,Math.min(bottom-20,origin?py-23:py+4));
+    const description=origin?'0 % · Départ '+usd(p)+' · Glisser pour déplacer le repère':'100 % du repère · Borne basse '+usd(p)+' · Baisse réelle −'+pct(priceDrop)+' % · Glisser pour ajuster';
+    return `<g data-line="${id}" data-price="${p}" data-percent="${percent}" data-correction="${priceDrop}" style="cursor:${origin?'move':'ns-resize'}"><title>${esc(description)}</title><line data-strategy-line x1="${strategyLeft}" x2="${right}" y1="${py}" y2="${py}" stroke="${color}" stroke-width="1.5"/><line x1="${strategyLeft}" x2="${right}" y1="${py}" y2="${py}" stroke="transparent" stroke-width="18"/><rect x="${right-48}" y="${badgeY}" width="44" height="19" rx="4" fill="#0e1420" fill-opacity=".92"/><text x="${right-26}" y="${badgeY+13}" text-anchor="middle" fill="${color}" font-size="10">${percent} %</text><circle cx="${anchorX}" cy="${py}" r="${origin?6:4}" fill="#0e1420" stroke="${color}" stroke-width="2"/><circle cx="${anchorX}" cy="${py}" r="14" fill="transparent"/></g>`;
+  };
   if(valid){
-    const sorted=[0,...options.strategyLevels];
-    sorted.slice(0,-1).forEach((c,i)=>{const a=y(strategyPrice(sell,c)),b=y(strategyPrice(sell,sorted[i+1]));s+=`<rect data-strategy-band x="${strategyLeft}" y="${Math.min(a,b)}" width="${right-strategyLeft}" height="${Math.abs(a-b)}" fill="#65cdb4" opacity="${i%2?.025:.05}" pointer-events="none"/>`;});
-    s+=`<line x1="${anchorX}" x2="${anchorX}" y1="${y(sell)}" y2="${y(strategyPrice(sell,options.strategyLevels.at(-1)))}" stroke="#88a89d" stroke-dasharray="3 5" pointer-events="none"/>`;
-    // Paint the selected level and then the origin last so nearby lines remain usable.
-    const order=options.strategyLevels.map((c,i)=>({c,i})).sort((a,b)=>Number(Math.abs(a.c-correction)<.0001)-Number(Math.abs(b.c-correction)<.0001));
-    order.forEach(({c,i})=>s+=line(strategyPrice(sell,c),'−'+pct(c)+' % · '+usd(strategyPrice(sell,c)),Math.abs(correction-c)<.0001?'#a6e8bb':'#789f95','buy-'+i,c));
-    s+=line(sell,'0 % · VENTE '+usd(sell),'#e9bd78','sell',0);
-    if(computed)s+=`<line x1="${strategyLeft}" x2="${right}" y1="${y(computed.breakEven)}" y2="${y(computed.breakEven)}" stroke="#808b9c" stroke-dasharray="2 7" pointer-events="none"/>`;
+    s+=line(endPrice,'#66cdb4','buy-'+(options.strategyLevels.length-1),100,endPercent);
+    s+=line(sell,'#e9bd78','sell',0,0);
   }
-  if(average>0)s+=`<line x1="${left}" x2="${right}" y1="${y(average)}" y2="${y(average)}" stroke="#8e83af" stroke-dasharray="3 6"/><text x="${left+8}" y="${y(average)-6}" fill="#a89abd" font-size="10">Prix moyen ${esc(usd(average))}</text>`;
   function drawObject(d,preview=false){
     const px=timeX(d.t1),py=y(d.p1),qx=timeX(d.t2??d.t1),qy=y(d.p2??d.p1),fib=d.fib||{},color=d.origin==='ai'?'#e9b46b':d.type==='fib'?(fib.color||options.fibColor):'#b7a4f7';
     let out=`<g ${preview?'opacity=".55" pointer-events="none"':`data-drawing="${d.id}"`} style="cursor:${d.locked?'default':'move'}">`;
@@ -129,7 +125,7 @@ function drawChart(){
   svg.innerHTML=s;$('drawing-count').textContent=state.drawings.filter(d=>d.asset===state.asset).length;
   $('indicator-legend').innerHTML=(options.volume?'<span>Volume</span>':'')+(options.ema20?'<span class="ema20-key">EMA 20</span>':'')+(options.ema50?'<span class="ema50-key">EMA 50</span>':'');
   $('latest').classList.toggle('selected',offset===0);if(cursor&&!drag&&!pending)drawCursor();else showCandle(data.at(-1));
-  $('chart-hint').textContent=overlays?'0 % : déplacer le Fibonacci · Niveaux : ajuster les % · F : plein écran':'Molette : zoom · Glisser : déplacer · F : plein écran';
+  $('chart-hint').textContent=overlays?'Glisser 0 % : déplacer · 100 % : ajuster la borne basse':'Molette : zoom · Glisser : déplacer · F : plein écran';
 }
 
 function showCandle(c){if(c)$('ohlc').textContent=`O ${usd(c.open)}   H ${usd(c.high)}   L ${usd(c.low)}   C ${usd(c.close)}   ·   Vol ${Math.round(c.volume).toLocaleString('fr-FR')}   ·   ${new Date(c.time).toLocaleString('fr-FR',{timeZone:'UTC'})}`}
@@ -141,7 +137,7 @@ svg.addEventListener('pointerdown',e=>{
   e.preventDefault();svg.setPointerCapture(e.pointerId);
   const l=e.target.closest('[data-line]'),d=e.target.closest('[data-drawing]');
   if(l&&tool==='cursor'){
-    const visibleAnchor=Math.max(g.left+12,Math.min(g.right-22,g.timeX(state.settings[state.asset].strategyTime??g.data[Math.floor(g.data.length*.35)].time)));
+    const visibleAnchor=Math.max(g.left+12,Math.min(g.right-68,g.timeX(state.settings[state.asset].strategyTime??g.data[Math.floor(g.data.length*.35)].time)));
     drag={type:l.dataset.line,start:p,geometry:{...g},sell:num('sell'),anchorTime:g.timeAt(visibleAnchor)};
     pinnedRange={min:g.min,max:g.max};svg.classList.add('is-dragging');return;
   }
@@ -161,7 +157,7 @@ svg.addEventListener('pointermove',e=>{
     const dp=g.priceAt(p.y)-g.priceAt(drag.start.y),dt=g.timeAt(p.x)-g.timeAt(drag.start.x);
     if(drag.type==='sell'){
       const sell=Math.max(1e-8,drag.sell+dp);$('sell').value=Number(sell.toPrecision(12));state.settings[state.asset].sell=num('sell');
-      state.settings[state.asset].strategyTime=g.timeAt(Math.max(g.left+12,Math.min(g.right-22,g.timeX(drag.anchorTime)+p.x-drag.start.x)));
+      state.settings[state.asset].strategyTime=g.timeAt(Math.max(g.left+12,Math.min(g.right-68,g.timeX(drag.anchorTime)+p.x-drag.start.x)));
       renderChart(true);
     }else if(drag.type.startsWith('buy-')){
       const index=Number(drag.type.slice(4)),low=index>0?options.strategyLevels[index-1]+.001:.001,high=index<options.strategyLevels.length-1?options.strategyLevels[index+1]-.001:99.999;
@@ -221,7 +217,7 @@ document.querySelectorAll('.edit-portfolio').forEach(b=>b.onclick=openPortfolio)
 document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('active',x===b));$(b.dataset.nav).scrollIntoView({behavior:'smooth',block:'start'})});
 function download(name,data,type){const url=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}$('export').onclick=()=>download('cryptonite-portefeuille.json',JSON.stringify(state,null,2),'application/json');$('snapshot').onclick=()=>download('cryptonite-'+state.asset+'.svg',new XMLSerializer().serializeToString(svg),'image/svg+xml');renderPortfolio();renderAsset();
 
-$("overlay-mode").onclick=()=>{overlays=!overlays;options.overlays=overlays;pinnedRange=null;selectTool('cursor');if(overlays&&geometry.data?.length&&!Number.isFinite(state.settings[state.asset].strategyTime))state.settings[state.asset].strategyTime=geometry.data[Math.floor(geometry.data.length*.35)].time;persist();$("overlay-mode").setAttribute("aria-pressed",String(overlays));$("overlay-mode").classList.toggle("selected",overlays);renderChart();if(overlays)toast('Glissez le point 0 % pour placer votre Fibonacci. Les autres poignées règlent les baisses en %.');};$("overlay-mode").classList.toggle("selected",overlays);$("overlay-mode").setAttribute("aria-pressed",String(overlays));$("price-mode").onclick=()=>{overlays=false;options.overlays=false;pinnedRange=null;$("overlay-mode").classList.remove('selected');$("overlay-mode").setAttribute('aria-pressed','false');persist();renderChart()};
+$("overlay-mode").onclick=()=>{overlays=!overlays;options.overlays=overlays;pinnedRange=null;selectTool('cursor');if(overlays&&geometry.data?.length&&!Number.isFinite(state.settings[state.asset].strategyTime))state.settings[state.asset].strategyTime=geometry.data[Math.floor(geometry.data.length*.35)].time;persist();$("overlay-mode").setAttribute("aria-pressed",String(overlays));$("overlay-mode").classList.toggle("selected",overlays);renderChart();if(overlays)toast('Glissez 0 % pour déplacer le repère, 100 % pour ajuster sa borne basse.');};$("overlay-mode").classList.toggle("selected",overlays);$("overlay-mode").setAttribute("aria-pressed",String(overlays));$("price-mode").onclick=()=>{overlays=false;options.overlays=false;pinnedRange=null;$("overlay-mode").classList.remove('selected');$("overlay-mode").setAttribute('aria-pressed','false');persist();renderChart()};
 
 function syncSignals(){if(signals.provider!==market.provider||signals.timeframe!==state.tf)signals.refresh(market.provider,state.tf);signals.sync(market.provider,state.tf);renderSignals();}
 let marketRenderTimer,lastPortfolioRender=0,lastChartSignature=null,lastContextRender=0;function updateMarket(){syncSignals();for(const a of ASSETS)prices[a]=market.quotes[a]?.price>0?market.quotes[a].price:NaN;if(!state.settings[state.asset].sell&&prices[state.asset]>0){state.settings[state.asset].sell=prices[state.asset];$('sell').value=prices[state.asset];persist();renderLab();}const q=market.quotes[state.asset];$('pair').textContent=state.asset+' / '+market.quote;$('sell-symbol').textContent=state.asset+' / '+market.quote;$('price').textContent=usd(prices[state.asset]);$('change').textContent=q?(q.change>=0?'+':'')+q.change.toFixed(2)+' % (24 h)':'—';$('change').classList.toggle('negative',!!q&&q.change<0);$('change').classList.toggle('positive',!!q&&q.change>=0);$('asset-tabs').querySelectorAll('[data-asset]').forEach(b=>{const a=b.dataset.asset;b.querySelector('small').textContent=a+' / '+market.quote;b.querySelector('.asset-tab-price').textContent=usd(prices[a]);});const age=market.lastUpdate?Math.max(0,Math.floor((Date.now()-market.lastUpdate)/1000)):null;const labels={loading:'Connexion aux marchés…',live:'EN DIRECT',polling:'ACTUALISATION 30 s',stale:'COURS NON ACTUALISÉ',unavailable:'FLUX INDISPONIBLE'};const label=labels[market.status]+' · '+market.provider+(age!==null?' · '+age+' s':'');document.querySelector('.demo').textContent=label;document.querySelector('.demo').classList.toggle('market-live',market.status==='live');document.querySelector('.exchange').textContent=market.provider+' · '+market.quote;$('pair').title=market.quote==='USDT'?'Cours coté en USDT. Valorisation indicative ; USDT assimilé au dollar pour les scénarios.':'Cours coté en dollars USD.';document.querySelector('.chart-note').textContent=label+' · Bougies réelles · Scénarios de rachat indicatifs'+(market.quote==='USDT'?' · USDT assimilé au dollar : valorisation indicative':'');$('market-price').disabled=!market.fresh;$('market-retry').hidden=!['stale','unavailable'].includes(market.status);if(ASSETS.every(a=>Number.isFinite(prices[a]))&&Date.now()-lastPortfolioRender>1000){lastPortfolioRender=Date.now();renderPortfolio();}const signature=market.key+':'+market.revisions.get(market.key)+':'+prices[state.asset];if(signature!==lastChartSignature){lastChartSignature=signature;renderChart();}if(Date.now()-lastContextRender>1000){lastContextRender=Date.now();window.dispatchEvent(new Event('byhnex-ai-context'));}if(window.parent!==window)window.parent.postMessage({type:'byhnex-market',status:market.status,source:market.provider,quote:market.quote,quotes:market.quotes,lastUpdate:market.lastUpdate},location.origin);}
