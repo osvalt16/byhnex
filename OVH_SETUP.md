@@ -53,7 +53,7 @@ Ouvrez **https://byhnex.com/iacrypto/ai-chat.php** dans votre navigateur. Ce GET
 {"ready":true,"accessRequired":true,"supportedAssets":["BTC","SOL"]}
 ```
 
-Sur GitHub Pages : **Assistant IA → Connexion**. L’adresse préconfigurée est `https://byhnex.com/iacrypto/ai-chat.php`. Les anciennes adresses Byhnex `/api/ai-chat` sauvegardées dans le navigateur sont corrigées automatiquement. Entrez uniquement la valeur de `BYHNEX_AI_ACCESS_CODE`, jamais la clé OpenAI. Cliquez sur **Vérifier la connexion** puis envoyez un message. La vérification reste gratuite ; l’envoi d’un message utilise l’API OpenAI du propriétaire.
+Sur GitHub Pages : **Assistant IA → Connexion**. L’adresse préconfigurée est `https://byhnex.com/iacrypto/ai-chat.php`. Les anciennes adresses Byhnex `/api/ai-chat` sauvegardées dans le navigateur sont corrigées automatiquement. Le formulaire s’ouvre automatiquement si le code manque ; la question reste dans la zone de saisie et aucun POST n’est envoyé. Entrez uniquement la valeur de `BYHNEX_AI_ACCESS_CODE`, jamais la clé OpenAI. Le code reste en mémoire et doit être renseigné après rechargement ou changement de page. Cliquez sur **Vérifier la connexion** puis envoyez un message. La vérification reste gratuite ; l’envoi d’un message utilise l’API OpenAI du propriétaire. Si le serveur refuse le code, le formulaire se rouvre et la question peut être renvoyée après correction, sans doublon dans l’historique.
 
 ## Si cela ne répond pas
 

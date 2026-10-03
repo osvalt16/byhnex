@@ -1,6 +1,8 @@
 import { validateReply } from './ai-contract.js?v=20261003-ovh';
 let accessCode='', configuredEndpoint=null;
-export function setAccessCode(code){if(code.startsWith('sk-'))throw Error('Utilisez le code d’accès Byhnex, jamais une clé OpenAI dans cette interface.');accessCode=code;}
+export function setAccessCode(code){const value=String(code||'').trim();if(value.startsWith('sk-'))throw Error('Utilisez le code d’accès Byhnex, jamais une clé OpenAI dans cette interface.');if(value&&value.length<16)throw Error('Le code d’accès Byhnex doit contenir au moins 16 caractères.');accessCode=value;}
+export function hasAccessCode(){return !!accessCode;}
+function serverError(response,data){const error=new Error(data?.error?.message||'Le serveur de l’assistant a renvoyé une erreur.');error.code=data?.error?.code||(response.status===401?'ACCESS_DENIED':'SERVER_ERROR');if(error.code==='ACCESS_DENIED')accessCode='';return error;}
 export function validEndpoint(value){
   if(!value)return '';
   if(value.includes('sk-'))throw Error('Cette adresse ne doit contenir aucune clé OpenAI.');
@@ -24,13 +26,14 @@ export function setEndpoint(url){configuredEndpoint=validEndpoint(url);try{if(co
 export async function checkConnection(){
   const endpoint=await getEndpoint();if(!endpoint)return {ready:false,missingEndpoint:true,accessRequired:true};
   const response=await fetch(endpoint,{headers:accessCode?{Authorization:'Bearer '+accessCode}:{},signal:AbortSignal.timeout(8000)});
-  const data=await response.json().catch(()=>null);if(!response.ok||!data)throw Error(data?.error?.message||'Le serveur de l’assistant n’est pas joignable.');
+  const data=await response.json().catch(()=>null);if(!response.ok)throw serverError(response,data);if(!data)throw Error('Le serveur de l’assistant n’est pas joignable.');
   return {...data,hasAccessCode:!!accessCode};
 }
 export async function sendAiMessage({message,history,context,signal}){
   const endpoint=await getEndpoint();if(!endpoint)throw Error('La connexion OpenAI doit être activée dans Connexion.');
+  if(!hasAccessCode()){const error=new Error('Entrez votre code d’accès Byhnex dans Connexion pour envoyer ce message.');error.code='ACCESS_REQUIRED';throw error;}
   try{
     const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',...(accessCode?{'Authorization':'Bearer '+accessCode}:{})},signal:AbortSignal.any([AbortSignal.timeout(60000),...(signal?[signal]:[])]),body:JSON.stringify({message,history,context})});
-    const data=await response.json().catch(()=>null);if(!response.ok)throw Error(data?.error?.message||'Le serveur de l’assistant a renvoyé une erreur.');return validateReply(data);
+    const data=await response.json().catch(()=>null);if(!response.ok)throw serverError(response,data);return validateReply(data);
   }catch(error){if(error.name==='TimeoutError')throw Error('L’analyse a pris trop de temps. Réessayez.');if(error.name==='AbortError')throw error;if(error instanceof TypeError)throw Error('Impossible de joindre l’assistant. Vérifiez la connexion réseau.');throw error;}
 }

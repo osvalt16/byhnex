@@ -6,6 +6,27 @@ const candle={time:now-60000,open:100,high:110,low:90,close:105,volume:12};
 const context={asset:'SOL',timeframe:'15m',quoteCurrency:'USD',currentPrice:100,market:{source:'Coinbase',lastUpdate:now,status:'live',stale:false},quotes:{SOL:{price:100,time:now},BTC:{price:100000,time:now}},candles:[candle],portfolio:{positions:{SOL:{quantity:20,averagePrice:80},BTC:{quantity:.01,averagePrice:90000}},cash:500},fees:{percentPerSide:.1,slippagePercent:.05,network:0},chartLevels:[],strategy:{amount:800,correction:12}};
 const request=(body={},options={})=>new Request('https://worker.test/api/ai-chat',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',Authorization:'Bearer '+env.BYHNEX_AI_ACCESS_CODE,...options.headers},body:JSON.stringify({message:'Analyse SOL',history:[],context,...body})});
 const apiOutput=data=>new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(data)}]}]}),{status:200});
+
+test('Client : code absent bloque le POST, code refusé effacé, clé OpenAI exclue',async()=>{
+  const savedLocation=globalThis.location,savedFetch=globalThis.fetch;
+  globalThis.location={href:'https://osvalt16.github.io/byhnex/'};
+  try{
+    const service=await import('./ai-service.js?auth-test=1');service.setEndpoint('https://byhnex.com/iacrypto/ai-chat.php');
+    let calls=0;globalThis.fetch=async()=>{calls++;return new Response(JSON.stringify({error:{code:'ACCESS_DENIED',message:'Code incorrect.'}}),{status:401});};
+    await assert.rejects(service.sendAiMessage({message:'Question',history:[],context}),error=>error.code==='ACCESS_REQUIRED');assert.equal(calls,0);
+    assert.throws(()=>service.setAccessCode('sk-proj-secret'));assert.throws(()=>service.setAccessCode('short'));
+    service.setAccessCode('  private-test-code-123456  ');assert.equal(service.hasAccessCode(),true);
+    await assert.rejects(service.sendAiMessage({message:'Question',history:[],context}),error=>error.code==='ACCESS_DENIED');assert.equal(calls,1);assert.equal(service.hasAccessCode(),false);
+  }finally{globalThis.location=savedLocation;globalThis.fetch=savedFetch;}
+});
+test('Client : les erreurs OpenAI conservent le code Byhnex et l’authentification reste dans le header',async()=>{
+  const savedLocation=globalThis.location,savedFetch=globalThis.fetch;globalThis.location={href:'https://osvalt16.github.io/byhnex/'};
+  try{
+    const service=await import('./ai-service.js?auth-test=2');service.setEndpoint('https://byhnex.com/iacrypto/ai-chat.php');service.setAccessCode('private-test-code-123456');
+    globalThis.fetch=async(url,options)=>{assert.equal(options.headers.Authorization,'Bearer private-test-code-123456');assert.ok(!options.body.includes('private-test-code-123456'));return new Response(JSON.stringify({error:{code:'OPENAI_AUTH_ERROR',message:'Connexion OpenAI à vérifier.'}}),{status:503});};
+    await assert.rejects(service.sendAiMessage({message:'Question',history:[],context}),error=>error.code==='OPENAI_AUTH_ERROR');assert.equal(service.hasAccessCode(),true);
+  }finally{globalThis.location=savedLocation;globalThis.fetch=savedFetch;}
+});
 test('Actions : aucun ordre de trading et aucun prix non fini autorisés',()=>{assert.equal(validateAction({type:'SELL',symbol:'SOL',price:100}),null);assert.equal(validateAction({type:'FOCUS_PRICE',symbol:'DOGE',price:1}),null);assert.equal(validateAction({type:'ADD_HORIZONTAL_LINE',symbol:'SOL',price:NaN}),null);assert.equal(validateAction({type:'CHANGE_TIMEFRAME',symbol:'SOL',timeframe:'2m'}),null);});
 test('Les suppressions IA protègent les dessins personnels, verrouillés et les autres actifs',()=>{
   const drawings=[{id:'user',asset:'SOL',type:'horizontal',origin:'user'},{id:'locked',asset:'SOL',type:'horizontal',origin:'ai',locked:true},{id:'btc',asset:'BTC',origin:'ai'},{id:'ai',asset:'SOL',type:'horizontal',origin:'ai'}];

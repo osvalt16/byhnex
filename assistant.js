@@ -1,5 +1,5 @@
 import {AiStore} from './ai-store.js?v=20261003-ovh';
-import {sendAiMessage,checkConnection,getEndpoint,setEndpoint,setAccessCode} from './ai-service.js?v=20261003-ovh-live';
+import {sendAiMessage,checkConnection,getEndpoint,setEndpoint,setAccessCode,hasAccessCode} from './ai-service.js?v=20261003-strategy';
 import {buildAiContext,savedPortfolio} from './ai-context.js?v=20261003-ovh';
 import {AI_ASSETS} from './ai-contract.js?v=20261003-ovh';
 
@@ -34,7 +34,8 @@ function mountAssistant(){
     const text=store.pending?'Analyse en cours…':status.ready?(status.hasAccessCode?'OpenAI prêt':'Code d’accès requis'):'OpenAI à connecter';
     $('ai-status').textContent=text;widget.classList.toggle('ai-connected',!!status.ready&&!!status.hasAccessCode);$('ai-connect-toggle').textContent=status.ready?'⚙ Connexion':'⚙ Activer OpenAI';
   }
-  async function refreshConnection(){try{status=await checkConnection();}catch{status={ready:false};}statusText();}
+  async function showConnection(message=''){const f=$('ai-connection');f.elements.endpoint.value=await getEndpoint();f.hidden=false;$('ai-connection-error').textContent=message;(f.elements.endpoint.value?f.elements.access:f.elements.endpoint).focus();}
+  async function refreshConnection(){try{status=await checkConnection();}catch{status={ready:false};}statusText();if(opened&&status.ready&&!hasAccessCode())showConnection('Entrez le code BYHNEX_AI_ACCESS_CODE de votre .env. Il est demandé à chaque nouvelle ouverture de la page.');}
   function open(){lastFocus=document.activeElement;opened=true;panel.hidden=false;document.body.classList.add('ai-open');document.fullscreenElement?.classList.add('ai-fullscreen-open');launcher.setAttribute('aria-expanded','true');navButton.setAttribute('aria-expanded','true');updateContext();render();refreshConnection();$('ai-input').focus();}
   function close(){opened=false;panel.hidden=true;document.body.classList.remove('ai-open');document.querySelectorAll('.ai-fullscreen-open').forEach(e=>e.classList.remove('ai-fullscreen-open'));launcher.setAttribute('aria-expanded','false');navButton.setAttribute('aria-expanded','false');if(lastFocus?.isConnected)lastFocus.focus();}
   launcher.onclick=()=>opened?close():open();navButton.onclick=()=>opened?close():open();$('ai-close').onclick=close;
@@ -60,18 +61,19 @@ function mountAssistant(){
   async function submit(){
     if(store.pending)return;const message=$('ai-input').value.trim();if(!message)return;
     const current=snapshot();if(!AI_ASSETS.includes(current.asset)){store.status(false,'Choisissez le graphique BTC ou SOL. Le copilote est spécialisé sur ces deux actifs.');return;}
-    if(!await getEndpoint()){store.status(false,'La connexion OpenAI n’est pas encore activée. Ouvrez « Activer OpenAI » pour connecter votre serveur.');return;}
-    const generation=++requestGeneration;controller=new AbortController();const history=store.history();store.add('user',message);$('ai-input').value='';store.status(true);
+    if(!await getEndpoint()){store.status(false,'Connectez votre serveur pour envoyer ce message.');await showConnection(store.error);return;}
+    if(!hasAccessCode()){await showConnection('Entrez le code d’accès Byhnex de votre .env pour envoyer votre question.');return;}
+    const generation=++requestGeneration;controller=new AbortController();const history=store.history(),sentMessage=store.add('user',message);$('ai-input').value='';store.status(true);
     try{const context=window.byhnexAiChart?await window.byhnexAiChart.getContext():current;if(controller.signal.aborted)return;const reply=await sendAiMessage({message,history,context,signal:controller.signal});if(generation!==requestGeneration)return;store.add('assistant',reply.message,{actions:reply.actions,context:{asset:context.asset,timeframe:context.timeframe,time:context.capturedAt,quoteCurrency:context.quoteCurrency}});store.status(false);}
-    catch(error){if(generation!==requestGeneration)return;store.status(false,error.name==='AbortError'?'Analyse annulée.':error.message);}
+    catch(error){if(generation!==requestGeneration)return;if(['ACCESS_DENIED','ACCESS_REQUIRED'].includes(error.code)){status.hasAccessCode=false;store.messages=store.messages.filter(m=>m.id!==sentMessage.id);if(!$('ai-input').value.trim())$('ai-input').value=message;$('ai-connection').elements.access.value='';store.status(false,error.message);await showConnection(error.message);return;}store.status(false,error.name==='AbortError'?'Analyse annulée.':error.message);}
   }
   $('ai-compose').onsubmit=e=>{e.preventDefault();submit();};$('ai-input').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();submit();}};
   $('ai-cancel').onclick=()=>{controller?.abort();store.status(false,'Analyse annulée.');};
   $('ai-new').onclick=()=>{controller?.abort();requestGeneration++;store.pending=false;store.clear();$('ai-input').focus();};
-  $('ai-connect-toggle').onclick=async()=>{const f=$('ai-connection');f.hidden=!f.hidden;f.elements.endpoint.value=await getEndpoint();if(!f.hidden)f.elements.endpoint.focus();};$('ai-connect-close').onclick=()=>$('ai-connection').hidden=true;
+  $('ai-connect-toggle').onclick=()=>{$('ai-connection').hidden?showConnection():$('ai-connection').hidden=true;};$('ai-connect-close').onclick=()=>$('ai-connection').hidden=true;
   $('ai-connection').onsubmit=async e=>{
     e.preventDefault();const f=e.target,button=f.querySelector('[type=submit]');button.disabled=true;$('ai-connection-error').textContent='';
-    try{setEndpoint(f.elements.endpoint.value.trim());setAccessCode(f.elements.access.value);status=await checkConnection();statusText();if(!status.ready)throw Error('Le serveur répond, mais sa connexion OpenAI n’est pas activée.');if(!status.hasAccessCode)throw Error('Entrez le code d’accès Byhnex configuré sur votre serveur.');f.hidden=true;store.error='';store.emit();}catch(error){$('ai-connection-error').textContent=error.message;}finally{button.disabled=false;}
+    try{setEndpoint(f.elements.endpoint.value.trim());setAccessCode(f.elements.access.value);if(!hasAccessCode())throw Error('Entrez le code d’accès Byhnex configuré dans votre .env.');status=await checkConnection();statusText();if(!status.ready)throw Error('Le serveur répond, mais sa connexion OpenAI n’est pas activée.');f.hidden=true;f.elements.access.value='';store.error='';store.emit();$('ai-input').focus();}catch(error){status.hasAccessCode=hasAccessCode();statusText();$('ai-connection-error').textContent=error.message;}finally{button.disabled=false;}
   };
   document.addEventListener('keydown',e=>{if(!opened)return;if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(!$('ai-connection').hidden)$('ai-connection').hidden=true;else close();}},true);
   document.addEventListener('fullscreenchange',()=>{const parent=document.fullscreenElement||document.body;parent.append(widget);parent.classList.toggle('ai-fullscreen-open',opened);});
