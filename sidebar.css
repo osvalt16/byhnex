@@ -22,10 +22,9 @@
 @media(min-width:521px) and (max-width:1000px){
   .bn-shared-nav>.bn-sidebar{width:70px;align-items:center;padding:20px 8px}
   .bn-sidebar .bn-brand{padding:0;margin:0 0 30px}
-  .bn-sidebar .bn-brand>span,.bn-sidebar .bn-workspace,.bn-sidebar .bn-nav-label,.bn-sidebar .bn-nav a>span,.bn-sidebar .bn-nav b,.bn-sidebar .bn-local,.bn-sidebar .bn-source,.bn-sidebar .bn-user,.bn-sidebar .ai-nav-button span,.bn-sidebar .ai-nav-button small{display:none}
+  .bn-sidebar .bn-brand>span,.bn-sidebar .bn-workspace,.bn-sidebar .bn-nav-label,.bn-sidebar .bn-nav a>span,.bn-sidebar .bn-nav b,.bn-sidebar .bn-local,.bn-sidebar .bn-source,.bn-sidebar .bn-user{display:none}
   .bn-sidebar .bn-nav a{padding:13px 14px;justify-content:center}
   .bn-sidebar .bn-nav svg{width:22px;height:22px}
-  .bn-sidebar .ai-nav-button{justify-content:center;padding:12px!important}
   .bn-graph-page>main,.bn-signals-page>main{margin-left:70px}
 }
 @media(max-width:520px){
@@ -40,8 +39,6 @@
   .bn-sidebar .bn-nav svg{width:19px;height:19px}
   .bn-sidebar .bn-local,.bn-sidebar .bn-source{display:block}
   .bn-sidebar .bn-user{display:flex}
-  .bn-sidebar .ai-nav-button{justify-content:flex-start}
-  .bn-sidebar .ai-nav-button span,.bn-sidebar .ai-nav-button small{display:inline}
   .bn-menu-bar{position:fixed;inset:0 0 auto;height:48px;z-index:80;display:flex;align-items:center;gap:10px;padding:0 14px;background:#0f131ef5;border-bottom:1px solid #242b3a;color:#e9edf6;font:12px Inter,'Segoe UI',sans-serif;box-sizing:border-box}
   .bn-menu-bar>a{color:#c2b0ff;text-decoration:none;font-size:17px;font-weight:700;letter-spacing:-.5px}
   .bn-menu-bar>span{margin-left:auto;font-size:10px;color:#98a3b9}

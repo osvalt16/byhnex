@@ -5,7 +5,7 @@ Site statique : accueil avec boîte à outils, recherche et favoris ; sept outil
 ## Démarrer et vérifier
 - `npm.cmd start` : http://localhost:5173
 - `npm.cmd test` : calculs après frais, agrégation OHLC, ticks, prix manquants, réponse réseau tardive, conversion valeur/quantité et réserve.
-- `npm.cmd run build` : export statique des 30 ressources publiques vers `dist`, liens relatifs contrôlés pour GitHub Pages.
+- `npm.cmd run build` : export statique des 26 ressources publiques vers `dist`, liens relatifs contrôlés pour GitHub Pages.
 - `browser-portfolio-check.mjs` : cours réels, valeurs éditables, capital/réserve, cartes, mobile (Chrome DevTools sur localhost:9224).
 - `browser-tools-check.mjs` : vérification des six outils existants avec les données réelles.
 
@@ -38,8 +38,3 @@ Ventes/rachats du journal : écritures de simulation uniquement. Une vente virtu
 https://osvalt16.github.io/byhnex/ — dépôt `osvalt16/byhnex`, branche `main`, workflow existant Deploy Pages. Les pages Byhnex d’origine, le module de devises et les images proviennent du site fourni par l’utilisateur. Les workflows de notifications et la branche de données sont préservés.
 
 `prepare-deployment.js` copie seulement les fichiers publics dans le clone `pages-repository`. Il vérifie que les scripts métier des autres outils n’ont pas changé ; le tableau portefeuille est volontairement modifié pour les valeurs éditables. Le serveur local, profils Chrome, PDF extraits et tests ne sont pas publiés.
-
-## Assistant IA
-Assistant BTC/SOL accessible depuis la sidebar ou le bouton flottant. Le chat réutilise les bougies et le portefeuille virtuel, conserve la session et propose des repères graphiques. Le front reste sur GitHub Pages ; l’API PHP 8.2 est prévue pour OVH PRO à https://byhnex.com/iacrypto/ai-chat.php. Les secrets restent dans /.secrets/.env, hors de /www. Transfert et connexion : [OVH_SETUP.md](OVH_SETUP.md). Le test public confirme que la configuration PHP est chargée ; les messages nécessitent le code d’accès Byhnex.
-
-Les tests JavaScript et PHP utilisent des réponses OpenAI simulées, sans appel payant. Aucun serveur PHP ni .env n’est publié sur Pages.

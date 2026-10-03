@@ -41,7 +41,7 @@ function mountSidebar() {
   setOpen(false);
   toggle.onclick=()=>setOpen(!opened,true);
   backdrop.onclick=()=>setOpen(false,true);
-  sidebar.addEventListener('click',event=>{if(event.target.closest('.bn-nav a,.ai-nav-button')) setOpen(false);});
+  sidebar.addEventListener('click',event=>{if(event.target.closest('.bn-nav a')) setOpen(false);});
   document.addEventListener('keydown',event=>{
     if(!opened || !mobile.matches)return;
     if(event.key==='Escape'){event.preventDefault();setOpen(false,true);}

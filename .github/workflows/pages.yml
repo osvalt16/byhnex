@@ -21,19 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: curl, mbstring
-          tools: none
-          coverage: none
       - run: npm test
-      - run: npm run test:php
-      - run: npm run build:ovh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: byhnex-ovh-api
-          path: byhnex-ovh-api.zip
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
