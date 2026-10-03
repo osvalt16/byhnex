@@ -1,6 +1,23 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {parseFibLevels,fibPrice,ema,parseStrategyLevels,strategyPrice,moveDrawing} from './chart-utils.js';
+import {parseFibLevels,fibPrice,ema,parseStrategyLevels,strategyPrice,moveDrawing,periodPlan,periodViewport} from './chart-utils.js';
+test('Chart periods pick a matching resolution, retain valid chosen units and use calendar dates',()=>{
+  const tfs={'1m':60,'5m':300,'15m':900,'30m':1800,'1H':3600,'4H':14400,'1D':86400,'1W':604800},now=Date.UTC(2026,9,3,12);
+  assert.equal(periodPlan('1D','1m',tfs,now).timeframe,'5m');assert.equal(periodPlan('1Y','1m',tfs,now).timeframe,'1D');
+  assert.equal(periodPlan('7D','1H',tfs,now).timeframe,'1H');assert.equal(periodPlan('1D','1W',tfs,now).timeframe,'1H');
+  assert.equal(periodPlan('3M','1D',tfs,now).start,Date.UTC(2026,6,3,12));
+  assert.equal(periodPlan('1Y','1D',tfs,Date.UTC(2024,1,29)).start,Date.UTC(2023,1,28));
+  assert.throws(()=>periodPlan('wrong','1H',tfs,now));
+});
+test('Time ranges respect real timestamps and report insufficient history rather than claiming a full period',()=>{
+  const now=864000000,tfs={'1H':3600},plan=periodPlan('7D','1H',tfs,now);
+  const candles=Array.from({length:220},(_,i)=>({time:now-(219-i)*3600000}));
+  const view=periodViewport(candles,plan,3600,now);assert.equal(view.count,169);assert.equal(view.partial,false);
+  assert.equal(periodViewport(candles.slice(-50),plan,3600,now).partial,true);
+  assert.equal(periodViewport([{time:plan.start+1800000},{time:now}],plan,3600,now).partial,true);
+  assert.equal(periodViewport(candles,{start:null},3600,now).count,220);
+  const gaps=candles.filter((_,i)=>i%3!==0);assert.ok(periodViewport(gaps,plan,3600,now).count<view.count);
+});
 test('Fibonacci personnalisé : décimales françaises, extensions, tri et doublons',()=>{
   assert.deepEqual(parseFibLevels('100 ; 0 ; 61,8 ; 161.8 ; 61.8'),[0,.618,1,1.618]);
   for(const value of ['','abc','Infinity','600','1;NaN'])assert.throws(()=>parseFibLevels(value));

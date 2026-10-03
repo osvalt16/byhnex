@@ -1,4 +1,4 @@
-import {TIMEFRAMES,normalizeCandles,aggregateCandles} from './market-data.js?v=20261003-chart-coherence';
+import {TIMEFRAMES,normalizeCandles,aggregateCandles} from './market-data.js?v=20261003-chart-v2';
 
 export const binanceIntervals={'1m':'1m','5m':'5m','15m':'15m','30m':'30m','1H':'1h','4H':'4h','1D':'1d','1W':'1w'};
 export const nativeInterval=tf=>[60,300,900,3600,21600,86400].filter(s=>s<=TIMEFRAMES[tf]).at(-1);
@@ -6,18 +6,19 @@ export function mergeCandles(previous,incoming){return [...new Map([...previous,
 
 // Shared, deduplicated history for the plot and its signal summaries.
 export class CandleHistory {
-  constructor(market){this.market=market;this.pending=new Map();this.meta=new Map();}
+  constructor(market){this.market=market;this.pending=new Map();this.meta=new Map();this.targets=new Map();}
   key(provider,asset,tf){return `${provider}:${asset}:${tf}`;}
   async load(provider,asset,tf,{minBars=220,force=false,before=null}={}){
     const market=this.market,key=this.key(provider,asset,tf),requestKey=key+(before===null?'':':before:'+before);
+    this.targets.set(requestKey,Math.max(minBars,this.targets.get(requestKey)||0));
     if(this.pending.has(requestKey))return this.pending.get(requestKey);
     const cached=market.series.get(key),meta=this.meta.get(key);
-    if(!force&&before===null&&cached?.length>=minBars&&meta&&market.now()-meta.updatedAt<30000)return cached;
-    const task=this.fetch(provider,asset,tf,{minBars,before});
+    if(!force&&before===null&&cached?.length>=minBars&&meta&&!meta.error&&market.now()-meta.updatedAt<30000){this.targets.delete(requestKey);return cached;}
+    const task=this.fetch(provider,asset,tf,{minBars,before,requestKey});
     this.pending.set(requestKey,task);
-    try{return await task;}catch(error){this.meta.set(key,{...(this.meta.get(key)||{}),error:true});throw error;}finally{if(this.pending.get(requestKey)===task)this.pending.delete(requestKey);}
+    try{return await task;}catch(error){this.meta.set(key,{...(this.meta.get(key)||{}),error:true});throw error;}finally{if(this.pending.get(requestKey)===task){this.pending.delete(requestKey);this.targets.delete(requestKey);}}
   }
-  async fetch(provider,asset,tf,{minBars,before}){
+  async fetch(provider,asset,tf,{minBars,before,requestKey}){
     const market=this.market,key=this.key(provider,asset,tf),epoch=market.historyEpoch,seconds=TIMEFRAMES[tf];
     const valid=()=>epoch===market.historyEpoch&&!market.closed;
     let data=[],end=before,pages=0;
@@ -47,7 +48,7 @@ export class CandleHistory {
       this.meta.set(key,{updatedAt:market.now(),error:false});
       market.emit(key);
       // Explicit backfill loads one page; initial history fills the SMA 200 window.
-      if(before!==null||data.length>=minBars||data[0]?.time===previousFirst)break;
+      if(before!==null||data.length>=Math.max(minBars,this.targets.get(requestKey)||0)||data[0]?.time===previousFirst)break;
       end=(provider==='Coinbase'?(market.nativeSeries.get(asset+':'+native)||[])[0]?.time:data[0]?.time)-1;
       if(!Number.isFinite(end))break;
     }

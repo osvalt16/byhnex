@@ -1,5 +1,33 @@
 export const FIB_LEVELS = [0, .236, .382, .5, .618, .786, 1];
 
+export function periodPlan(period,timeframe,timeframes,now=Date.now()){
+  if(!timeframes[timeframe]||!['1D','7D','30D','3M','1Y','MAX'].includes(period))throw Error('Période ou unité invalide.');
+  if(period==='MAX')return {period,timeframe,start:null,end:now,minBars:220};
+  const end=new Date(now),start=new Date(now);
+  if(period==='3M'||period==='1Y'){
+    const day=start.getUTCDate();start.setUTCDate(1);
+    start.setUTCMonth(start.getUTCMonth()-(period==='3M'?3:12));
+    const lastDay=new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+1,0)).getUTCDate();
+    start.setUTCDate(Math.min(day,lastDay));
+  }else start.setUTCDate(start.getUTCDate()-{'1D':1,'7D':7,'30D':30}[period]);
+  const duration=end-start,requested=duration/(timeframes[timeframe]*1000);
+  if(requested<15||requested>600){
+    const choices=Object.entries(timeframes).filter(([,seconds])=>duration/(seconds*1000)>=15&&duration/(seconds*1000)<=600);
+    if(choices.length)timeframe=choices.reduce((a,b)=>Math.abs(Math.log(b[1]/timeframes[timeframe]))<Math.abs(Math.log(a[1]/timeframes[timeframe]))?b:a)[0];
+  }
+  return {period,timeframe,start:+start,end:now,minBars:Math.max(220,Math.ceil(duration/(timeframes[timeframe]*1000))+200)};
+}
+
+export function periodViewport(candles,plan,seconds,now=Date.now()){
+  if(!candles.length)return {count:0,offset:0,partial:false};
+  if(plan.start===null)return {count:candles.length,offset:0,partial:false};
+  // Include the candle covering the start boundary, without inventing gaps.
+  const duration=now-plan.end,start=plan.start+duration;
+  let first=candles.findIndex(c=>c.time+seconds*1000>start);
+  if(first<0)first=candles.length-1;
+  return {count:candles.length-first,offset:0,partial:candles[0].time>start};
+}
+
 export function parseFibLevels(text) {
   const levels = String(text).split(/[;\s]+/).filter(Boolean).map(x => Number(x.replace(',', '.')) / 100);
   if (!levels.length || levels.length > 16 || levels.some(x => !Number.isFinite(x) || x < -5 || x > 5)) {

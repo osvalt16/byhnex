@@ -1,8 +1,8 @@
-import {ASSETS,TIMEFRAMES} from './market-data.js?v=20261003-chart-coherence';
+import {ASSETS,TIMEFRAMES} from './market-data.js?v=20261003-chart-v2';
 
 // Wilder RSI 14 and price + SMA 50 versus SMA 200 on the plot's exact series.
 // Excluding the unfinished candle keeps a signal stable until the candle closes.
-export function calculateSignals(candles,now=Date.now(),timeframe='15m'){
+export function calculateSignals(candles,now=Date.now(),timeframe){
   const duration=TIMEFRAMES[timeframe]*1000;
   if(!duration)throw Error('Unité de temps invalide');
   const closes=candles.filter(c=>c.time+duration<=now).map(c=>c.close);

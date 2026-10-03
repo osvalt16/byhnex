@@ -5,15 +5,15 @@ import {LiveMarket,TIMEFRAMES} from './market-data.js';
 const bars=closes=>closes.map((close,i)=>({time:i*900000,close}));
 test('RSI 14 and SMA trend use closed 15-minute candles, excluding the unfinished candle',()=>{
   const data=bars(Array.from({length:251},(_,i)=>i<250?i+1:.01));
-  const result=calculateSignals(data,250*900000);
+  const result=calculateSignals(data,250*900000,'15m');
   assert.equal(result.count,250);assert.equal(result.rsi,100);assert.equal(result.trend,'up');assert.equal(result.zone,'sell');
-  const down=calculateSignals(bars(Array.from({length:250},(_,i)=>300-i)),250*900000);
+  const down=calculateSignals(bars(Array.from({length:250},(_,i)=>300-i)),250*900000,'15m');
   assert.equal(down.rsi,0);assert.equal(down.trend,'down');assert.equal(down.zone,'buy');
-  assert.deepEqual(calculateSignals(bars([10,11]),900000),{rsi:null,trend:null,zone:null,count:1});
+  assert.deepEqual(calculateSignals(bars([10,11]),900000,'15m'),{rsi:null,trend:null,zone:null,count:1});
 });
 test('Wilder smoothing matches a known RSI example rather than a simple average',()=>{
   const prices=[44.34,44.09,44.15,43.61,44.33,44.83,45.1,45.42,45.84,46.08,45.89,46.03,45.61,46.28,46.28,46,46.03,46.41,46.22,45.64];
-  assert.ok(Math.abs(calculateSignals(bars(prices),prices.length*900000).rsi-57.915)<.001);
+  assert.ok(Math.abs(calculateSignals(bars(prices),prices.length*900000,'15m').rsi-57.915)<.001);
 });
 test('Each asset fails independently; outages retain explicitly stale values without invented signals',async()=>{
   let failing=false;
@@ -37,8 +37,9 @@ test('Every chart timeframe excludes its own unfinished candle; a flat market is
     const duration=seconds*1000,data=Array.from({length:201},(_,i)=>({time:i*duration,close:i<200?i+1:.01}));
     const result=calculateSignals(data,200*duration,tf);assert.equal(result.count,200,tf);assert.equal(result.rsi,100,tf);assert.equal(result.trend,'up',tf);
   }
-  assert.equal(calculateSignals(bars(Array(200).fill(10)),200*900000).rsi,50);
+  assert.equal(calculateSignals(bars(Array(200).fill(10)),200*900000,'15m').rsi,50);
   assert.throws(()=>calculateSignals([],0,'bad'));
+  assert.throws(()=>calculateSignals([],0),'An omitted timeframe must never silently select 15 minutes');
 });
 test('Fast timeframe changes discard old indicators and late replies; returning to a timeframe reuses its cache',async()=>{
   const pending=[];let calls=0;

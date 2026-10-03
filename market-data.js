@@ -1,4 +1,4 @@
-import {CandleHistory,binanceIntervals} from './candle-history.js?v=20261003-chart-coherence';
+import {CandleHistory,binanceIntervals} from './candle-history.js?v=20261003-chart-v2';
 export const ASSETS=['SOL','BTC','DOGE','ZEC'];
 export const TIMEFRAMES={'1m':60,'5m':300,'15m':900,'30m':1800,'1H':3600,'4H':14400,'1D':86400,'1W':604800};
 export function bucketTime(time,seconds){const shift=seconds===604800?345600000:0;return Math.floor((time-shift)/(seconds*1000))*seconds*1000+shift;}

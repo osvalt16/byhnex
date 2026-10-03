@@ -19,4 +19,10 @@
 .asset-signal .signal-sell{color:#ff5f76}
 .asset-signal em{font-size:8px;font-style:normal;color:#68788e}
 .asset-signal.signal-stale em{color:#d4b17c}
+.chart-indicators{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+#chart-signal-summary{display:flex;align-items:center;gap:8px;color:#b5c1d1;white-space:nowrap}
+#chart-signal-summary b{font-weight:500}
+#chart-signal-summary .asset-signal{display:flex;gap:8px;align-items:center}
+#chart-range-status{font-variant-numeric:tabular-nums}
+#periods[aria-busy=true] button.selected{box-shadow:inset 0 -2px #00b79d}
 @media(max-width:650px){.asset-tabs{grid-template-columns:repeat(4,180px);gap:12px}.asset-tab .asset-tab-price{display:none}.asset-tab .asset-signal{gap:6px;font-size:9px}.asset-tab{padding-top:12px;padding-bottom:12px}}

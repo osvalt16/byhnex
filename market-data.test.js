@@ -40,6 +40,18 @@ test('Weekly history loads enough real daily candles, uses Monday UTC and exclud
   const data=await service.loadHistory('Coinbase','BTC','1W');assert.ok(calls<=8&&calls>1);assert.ok(data.length>=220);
   assert.ok(data.every(c=>new Date(c.time).getUTCDay()===1));assert.equal(calculateSignals(data,now,'1W').trend,'up');service.close();
 });
+test('A period request upgrades pending shared history instead of stopping at the indicator window',async()=>{
+  const day=86400000,now=Date.UTC(2026,9,3),rows=Array.from({length:900},(_,i)=>[(now-(899-i)*day)/1000,8,12,10,11,1]);
+  let calls=0,release;
+  const service=new LiveMarket({now:()=>now,fetcher:async url=>{
+    calls++;if(calls===1)await new Promise(resolve=>{release=resolve;});
+    const end=new URL(url).searchParams.get('end');
+    return {ok:true,json:async()=>rows.filter(r=>!end||r[0]*1000<=Date.parse(end)).slice(-300)};
+  }});
+  const short=service.loadHistory('Coinbase','SOL','1D',{minBars:220});
+  const year=service.loadHistory('Coinbase','SOL','1D',{minBars:565});release();
+  const [a,b]=await Promise.all([short,year]);assert.equal(a,b);assert.ok(b.length>=565);assert.equal(calls,2);service.close();
+});
 test('A late timeframe response stays in its own cache and cannot change the selected plot',async()=>{
   let resolve;
   const now=Date.UTC(2026,9,3);
