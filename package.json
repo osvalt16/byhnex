@@ -8,6 +8,6 @@
     "build": "node build-pages.js",
     "build:ovh": "node build-ovh.js",
     "test:php": "node --test ovh.test.js",
-    "test": "node --test ai.test.js chart-utils.test.js market-data.test.js portfolio.test.js strategy.test.js"
+    "test": "node --test ai.test.js chart-utils.test.js market-data.test.js portfolio.test.js strategy.test.js chart-signals.test.js"
   }
 }

@@ -1,3 +1,4 @@
+import './sidebar.js?v=20261003-sidebar';
 import {AiStore} from './ai-store.js?v=20261003-ovh';
 import {sendAiMessage,checkConnection,getEndpoint,setEndpoint,setAccessCode,hasAccessCode} from './ai-service.js?v=20261003-strategy';
 import {buildAiContext,savedPortfolio} from './ai-context.js?v=20261003-ovh';
@@ -21,7 +22,7 @@ function mountAssistant(){
   document.body.append(widget);
   const $=id=>widget.querySelector('#'+id),panel=$('ai-panel'),launcher=widget.querySelector('.ai-launcher');
   let opened=false,lastFocus=null,controller=null,requestGeneration=0,status={ready:false},contextSnapshot=null,contextSequence=0;
-  const nav=document.querySelector('.bn-nav,.sidebar nav'),navButton=document.createElement('button');navButton.className='ai-nav-button';navButton.type='button';navButton.innerHTML=icon+'<span>Assistant IA</span><small>OPENAI</small>';navButton.setAttribute('aria-controls','ai-panel');navButton.setAttribute('aria-expanded','false');if(nav)nav.append(navButton);
+  const nav=document.querySelector('.bn-nav'),navButton=document.createElement('button');navButton.className='ai-nav-button';navButton.type='button';navButton.innerHTML=icon+'<span>Assistant IA</span><small>OPENAI</small>';navButton.setAttribute('aria-label','Assistant IA');navButton.title='Assistant IA';navButton.setAttribute('aria-controls','ai-panel');navButton.setAttribute('aria-expanded','false');if(nav)nav.append(navButton);
   const snapshot=()=>window.byhnexAiChart?.snapshot()||buildAiContext({state:savedPortfolio(),market:window.byhnexAiMarket?.()||{}});
   async function updateContext(){
     const sequence=++contextSequence;const c=snapshot();if(sequence!==contextSequence)return;contextSnapshot=c;
